@@ -35,7 +35,7 @@ export default function OnboardingPage() {
               >
                 <div className="relative w-48 h-20 mx-auto drop-shadow-lg">
                   <Image
-                    src="/img/boride-white1.png"
+                    src="/img/boride-white1.PNG"
                     alt="BoRide Logo"
                     fill
                     className="object-contain"
@@ -102,7 +102,7 @@ export default function OnboardingPage() {
               >
                 <div className="relative w-44 h-24 mx-auto drop-shadow-xl">
                   <Image
-                    src="/img/boride-white1.png"
+                    src="/img/boride-white1.PNG"
                     alt="BoRide Logo"
                     fill
                     className="object-contain"

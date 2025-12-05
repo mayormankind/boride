@@ -99,7 +99,7 @@ export default function LoginPage() {
           <div className="mb-8 text-center">
             <div className="flex justify-center mb-6">
               <Image
-                src="/img/boride-black1.png"
+                src="/img/boride-black1.PNG"
                 width={150}
                 height={40}
                 alt="Boride"
