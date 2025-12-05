@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 // Zod Schema
 const loginSchema = z.object({
@@ -33,9 +34,11 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [detectedRole, setDetectedRole] = useState<'student' | 'rider' | null>(
+  const [detectedRole, setDetectedRole] = useState<'student' | 'driver' | null>(
     null
   );
+
+  const router = useRouter();
 
   const {
     register,
@@ -62,7 +65,7 @@ export default function LoginPage() {
       if (identifier.toLowerCase().endsWith('@student.babcock.edu.ng')) {
         setDetectedRole('student');
       } else {
-        setDetectedRole('rider');
+        setDetectedRole('driver');
       }
     } else {
       setDetectedRole(null);
@@ -73,6 +76,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     await new Promise((resolve) => setTimeout(resolve, 1200));
     alert(`Logged in as ${detectedRole || 'user'}!`);
+    router.push(`/${detectedRole}`);
     setIsSubmitting(false);
   };
 
@@ -181,7 +185,7 @@ export default function LoginPage() {
               variant={
                 detectedRole === 'student'
                   ? 'student'
-                  : detectedRole === 'rider'
+                  : detectedRole === 'driver'
                   ? 'rider'
                   : 'default'
               }

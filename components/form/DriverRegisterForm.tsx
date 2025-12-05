@@ -51,7 +51,7 @@ export default function RiderRegisterForm({ onSubmit }: { onSubmit: (data: Rider
           <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
             id="fullName"
-            placeholder="John Doe"
+            placeholder="Maxima Samuel "
             className={`pl-10 ${errors.fullName ? 'border-red-500' : ''}`}
             {...register('fullName')}
           />
