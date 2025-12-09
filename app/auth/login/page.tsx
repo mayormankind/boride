@@ -11,6 +11,10 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { PasswordInput } from '@/components/ui/password-input';
+import { api } from '@/lib/api';
+import { BorideLogo } from '@/components/ui/boride-logo';
+import { toast } from 'sonner';
 
 // Zod Schema
 const loginSchema = z.object({
@@ -72,12 +76,29 @@ export default function LoginPage() {
     }
   }, [identifier]);
 
+  // const onSubmit = async (data: LoginForm) => {
+  //   setIsSubmitting(true);
+  //   await new Promise((resolve) => setTimeout(resolve, 1200));
+  //   alert(`Logged in as ${detectedRole || 'user'}!`);
+  //   router.push(`/${detectedRole}`);
+  //   setIsSubmitting(false);
+  // };
+
   const onSubmit = async (data: LoginForm) => {
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    alert(`Logged in as ${detectedRole || 'user'}!`);
-    router.push(`/${detectedRole}`);
-    setIsSubmitting(false);
+    try{
+      if(detectedRole == "student"){
+        await api.post('/student/login',data)
+      }else{
+        await api.post('/driver/login',data)
+      }
+      toast.success('Logged in successfully') 
+      router.push(`/${detectedRole}`);
+    }catch(err:any){
+      console.log(err.response.data.message)
+      toast.error(err.response.data.message)
+    }
+    setIsSubmitting(false)
   };
 
   return (
@@ -89,7 +110,8 @@ export default function LoginPage() {
           alt="Boride Login"
           className="h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center flex-col">
+          <BorideLogo type='light'/>
           <div className="text-white text-center px-8">
             <h1 className="text-3xl font-bold mb-4">Welcome Back</h1>
             <p className="text-lg">Log in and continue your journey</p>
@@ -101,15 +123,7 @@ export default function LoginPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
-            <div className="flex justify-center mb-6">
-              <Image
-                src="/img/boride-black1.PNG"
-                width={150}
-                height={40}
-                alt="Boride"
-                className="opacity-90"
-              />
-            </div>
+            <BorideLogo/>
 
             <h1 className="text-2xl font-bold">Welcome Back</h1>
             <p className="text-muted-foreground mt-2">
@@ -151,7 +165,7 @@ export default function LoginPage() {
               <Label htmlFor="password">Password</Label>
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
+                <PasswordInput
                   id="password"
                   type="password"
                   placeholder="••••••••"

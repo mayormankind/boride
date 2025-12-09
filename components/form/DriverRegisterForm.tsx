@@ -5,9 +5,10 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { User, Mail, Phone, Lock } from 'lucide-react';
+import { User, Mail, Phone, Lock, Loader2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '../ui/password-input';
 
 const riderSchema = z.object({
   fullName: z.string().min(1, 'Full name is required').regex(/^[a-zA-Z\s]+$/, 'Only letters and spaces allowed'),
@@ -24,7 +25,7 @@ const riderSchema = z.object({
 
 type RiderForm = z.infer<typeof riderSchema>;
 
-export default function RiderRegisterForm({ onSubmit }: { onSubmit: (data: RiderForm) => void }) {
+export default function RiderRegisterForm({ onSubmit, isSubmitting }: { onSubmit: (data: RiderForm) => void, isSubmitting: boolean }) {
   const {
     register,
     handleSubmit,
@@ -104,7 +105,7 @@ export default function RiderRegisterForm({ onSubmit }: { onSubmit: (data: Rider
         </label>
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
+          <PasswordInput
             id="password"
             type="password"
             placeholder="••••••••"
@@ -122,7 +123,7 @@ export default function RiderRegisterForm({ onSubmit }: { onSubmit: (data: Rider
         </label>
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
+          <PasswordInput
             id="confirmPassword"
             type="password"
             placeholder="••••••••"
@@ -139,7 +140,7 @@ export default function RiderRegisterForm({ onSubmit }: { onSubmit: (data: Rider
         disabled={!isValid}
         className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold"
       >
-        Sign Up as Rider
+        {isSubmitting ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : "Sign Up as Rider"}
       </Button>
     </form>
   );

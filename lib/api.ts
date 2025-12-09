@@ -1,6 +1,6 @@
 import type { ApiResponse } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 export class ApiError extends Error {
   constructor(
@@ -29,7 +29,7 @@ async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
 
 export const api = {
   async get<T>(endpoint: string, token?: string): Promise<ApiResponse<T>> {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

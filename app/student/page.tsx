@@ -28,6 +28,7 @@ export default function StudentDashboard() {
   const handleRequestRide = () => {
     if (!pickup || !destination) return;
     // TODO: Implement ride request logic
+    alert("Information is being broadcast to availible riders. Please wait!")
     console.log('Requesting ride:', { pickup, destination });
   };
 

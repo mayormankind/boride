@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ReactQueryProvider } from "@/lib/providers/ReactQueryProvider";
+import { Toaster } from "sonner"
 
 // Primary font - Inter
 const inter = Inter({
@@ -86,6 +87,7 @@ export default function RootLayout({
           fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif',
         }}
       >
+        <Toaster position="top-right" richColors/>
         <ReactQueryProvider>{children}</ReactQueryProvider>
       </body>
     </html>

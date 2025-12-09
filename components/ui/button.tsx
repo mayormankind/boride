@@ -26,16 +26,14 @@ const buttonVariants = cva(
 
         link: "text-primary underline-offset-4 hover:underline",
 
-        /** -----------------------------------------------------
-         *  🚀 B O R I D E   B R A N D E D   V A R I A N T S
-         *  ----------------------------------------------------- */
+        // Boride brand colors
         student:
           "bg-student-primary text-white hover:bg-student-hover",
 
         rider:
           "bg-rider-primary text-white hover:bg-rider-hover",
 
-        // A softer style for muted areas (landing, onboarding, cards)
+        // A softer style for muted areas
         studentOutline:
           "border border-student-primary text-student-primary bg-transparent hover:bg-student-primary/10",
 

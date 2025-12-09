@@ -8,17 +8,28 @@ import { GraduationCap, Car } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 type UserRole = 'student' | 'rider';
 
 export default function RegisterPage() {
   const [selectedRole, setSelectedRole] = useState<UserRole>('student');
   const router = useRouter();
+  const [ isSubmitting, setisSubmitting ] = useState(false)
 
-  const handleStudentSubmit = (data: any) => {
-    console.log('Student registration data:', data);
-    router.push('/auth/verify');
-    // TODO: Implement student registration API call
+  const handleStudentSubmit = async (data: any) => {
+    setisSubmitting(true)
+    try{
+      await api.post("/student/register",data);
+      console.log('Student registration data:', data);
+      toast.success('Logged in successfully')
+      router.push('/auth/verify');
+    }catch(err:any){
+      console.log(err.response.data.message)
+      toast.error(err.response.data.message)
+    }
+    setisSubmitting(false)
   };
 
   const handleRiderSubmit = (data: any) => {
@@ -131,8 +142,8 @@ export default function RegisterPage() {
       </motion.div>
 
       {/* Right Column - Registration Form */}
-      <div className={`w-full lg:w-1/2 flex items-center justify-center p-8 transition-colors duration-500 ${currentColor.formBg}`}>
-        <div className="w-full max-w-md">
+      <div className={`w-full lg:w-1/2 flex items-center justify-center p-4 md:p-8 transition-colors duration-500 ${currentColor.formBg}`}>
+        <div className="w-full max-w-lg">
           {/* Logo/Brand */}
           <motion.div 
             className="text-center mb-8"
@@ -192,7 +203,7 @@ export default function RegisterPage() {
 
           {/* Form Container with Enhanced Design */}
           <motion.div
-            className={`bg-white rounded-2xl shadow-xl p-8 border-2 transition-all duration-500 ${currentColor.border}`}
+            className={`bg-white rounded-md shadow-lg p-6 md:p-8 transition-all duration-500]]`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
@@ -224,7 +235,7 @@ export default function RegisterPage() {
                       </p>
                     </div>
                   </div>
-                  <StudentRegisterForm onSubmit={handleStudentSubmit} />
+                  <StudentRegisterForm onSubmit={handleStudentSubmit} isSubmitting={isSubmitting} />
                 </motion.div>
               ) : (
                 <motion.div
@@ -244,7 +255,7 @@ export default function RegisterPage() {
                       </p>
                     </div>
                   </div>
-                  <RiderRegisterForm onSubmit={handleRiderSubmit} />
+                  <RiderRegisterForm onSubmit={handleRiderSubmit} isSubmitting={isSubmitting} />
                 </motion.div>
               )}
             </AnimatePresence>

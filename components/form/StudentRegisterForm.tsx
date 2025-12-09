@@ -4,9 +4,10 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { User, Phone, Lock, Mail, GraduationCap } from 'lucide-react';
+import { User, Phone, Lock, Mail, GraduationCap, Loader2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '../ui/password-input';
 
 const studentSchema = z.object({
   fullName: z.string().min(1, 'Full name is required').regex(/^[a-zA-Z\s]+$/, 'Only letters and spaces allowed'),
@@ -26,7 +27,7 @@ const studentSchema = z.object({
 
 type StudentForm = z.infer<typeof studentSchema>;
 
-export default function StudentRegisterForm({ onSubmit }: { onSubmit: (data: StudentForm) => void }) {
+export default function StudentRegisterForm({ onSubmit, isSubmitting }: { onSubmit: (data: StudentForm) => void, isSubmitting: boolean }) {
   const {
     register,
     handleSubmit,
@@ -38,7 +39,7 @@ export default function StudentRegisterForm({ onSubmit }: { onSubmit: (data: Stu
   });
 
   const handleFormSubmit = (data: StudentForm) => {
-    onSubmit(data);
+    onSubmit(data);  
     reset();
   };
 
@@ -123,7 +124,7 @@ export default function StudentRegisterForm({ onSubmit }: { onSubmit: (data: Stu
         </label>
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
+          <PasswordInput
             id="password"
             type="password"
             placeholder="••••••••"
@@ -141,7 +142,7 @@ export default function StudentRegisterForm({ onSubmit }: { onSubmit: (data: Stu
         </label>
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
+          <PasswordInput
             id="confirmPassword"
             type="password"
             placeholder="••••••••"
@@ -158,7 +159,7 @@ export default function StudentRegisterForm({ onSubmit }: { onSubmit: (data: Stu
         disabled={!isValid}
         className="w-full bg-student-primary hover:bg-emerald-600 text-white font-semibold"
       >
-        Get Started as Student
+        {isSubmitting ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : "Get Started as Student"}
       </Button>
     </form>
   );
