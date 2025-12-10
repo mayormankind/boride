@@ -15,7 +15,7 @@ const studentSchema = z.object({
     /^[a-zA-Z]+[a-zA-Z]\d{4}@student\.babcock\.edu\.ng$/,
     'Email must be Surname+Initial+Last4Digits@student.babcock.edu.ng'
   ),
-  // phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits (omit +234)'),
+  phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits (omit +234)'),
   password: z.string().min(8, 'Password must be at least 8 characters')
     .regex(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Must include letter, number, and uppercase character'),
   confirmPassword: z.string(),
@@ -38,11 +38,8 @@ export default function StudentRegisterForm({ onSubmit, isSubmitting }: { onSubm
   });
 
   const handleFormSubmit = async (data: StudentForm) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { confirmPassword, ...rest } = data;
-    // Phone is commented out as it is not needed for now
-    // const payload = { ...rest, phone: `+234${data.phone}` };
-    const payload = { ...rest };
+    const payload = { ...rest, phoneNo: `+234${data.phone}` };
     await onSubmit(payload);
   };
 
@@ -101,7 +98,7 @@ export default function StudentRegisterForm({ onSubmit, isSubmitting }: { onSubm
       </div>
 
       {/* Phone */}
-      {/* <div>
+      <div>
         <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
           Phone Number
         </label>
@@ -118,7 +115,7 @@ export default function StudentRegisterForm({ onSubmit, isSubmitting }: { onSubm
           />
         </div>
         {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone.message}</p>}
-      </div> */}
+      </div>
 
       {/* Password */}
       <div>

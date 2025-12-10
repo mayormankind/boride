@@ -19,7 +19,7 @@ export default function VerifyPage() {
 
   // Focus next input on key press
   const handleChange = (index: number, value: string) => {
-    if (value.length > 1) return; // Prevent multi-character paste
+    if (value.length > 1) return;
 
     const newOtp = [...otp];
     newOtp[index] = value;

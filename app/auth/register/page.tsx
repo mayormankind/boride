@@ -39,7 +39,7 @@ export default function RegisterPage() {
       const res = await api.post("/driver/register", data);
       console.log('Rider registration data:', data);
       toast.success(res.message ?? 'Registration successful');
-      router.push('/auth/login'); 
+      router.push('/auth/verify'); 
     } catch (err: any) {
       console.log(err.message);
       toast.error(err.message);
