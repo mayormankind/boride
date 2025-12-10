@@ -15,6 +15,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { api } from '@/lib/api';
 import { BorideLogo } from '@/components/ui/boride-logo';
 import { toast } from 'sonner';
+import { buildDriverPayload, buildStudentPayload } from '@/lib/helpers';
 
 // Zod Schema
 const loginSchema = z.object({
@@ -76,30 +77,32 @@ export default function LoginPage() {
     }
   }, [identifier]);
 
-  // const onSubmit = async (data: LoginForm) => {
-  //   setIsSubmitting(true);
-  //   await new Promise((resolve) => setTimeout(resolve, 1200));
-  //   alert(`Logged in as ${detectedRole || 'user'}!`);
-  //   router.push(`/${detectedRole}`);
-  //   setIsSubmitting(false);
-  // };
-
   const onSubmit = async (data: LoginForm) => {
     setIsSubmitting(true);
-    try{
-      if(detectedRole == "student"){
-        await api.post('/student/login',data)
-      }else{
-        await api.post('/driver/login',data)
-      }
-      toast.success('Logged in successfully') 
+  
+    try {
+      const payload =
+        detectedRole === "student"
+          ? buildStudentPayload(data)
+          : buildDriverPayload(data);
+  
+      const url =
+        detectedRole === "student"
+          ? "/student/login"
+          : "/driver/login";
+  
+      await api.post(url, payload);
+  
+      toast.success("Logged in successfully");
       router.push(`/${detectedRole}`);
-    }catch(err:any){
-      console.log(err.response.data.message)
-      toast.error(err.response.data.message)
+    } catch (err: any) {
+      console.log(err);
+      toast.error(err.response?.data?.message || "Login failed");
     }
-    setIsSubmitting(false)
+  
+    setIsSubmitting(false);
   };
+  
 
   return (
     <div className="flex min-h-screen bg-background">

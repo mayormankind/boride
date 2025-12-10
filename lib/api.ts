@@ -1,3 +1,4 @@
+import axios, { AxiosError, AxiosResponse } from 'axios';
 import type { ApiResponse } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
@@ -13,31 +14,56 @@ export class ApiError extends Error {
   }
 }
 
-async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
-  const data = await response.json();
+// Create axios instance
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-  if (!response.ok) {
+// Helper to handle axios responses
+function handleResponse<T>(response: AxiosResponse<T>): ApiResponse<T> {
+  return response.data as ApiResponse<T>;
+}
+
+// Helper to handle axios errors
+function handleError(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status || 500;
+    const data = error.response?.data as any;
+    
+    // If we have a structured backend error response
+    if (data && (data.message || data.errors)) {
+      throw new ApiError(
+        data.message || 'An error occurred',
+        status,
+        data.errors
+      );
+    }
+    
+    // Fallback for generic axios errors
     throw new ApiError(
-      data.message || 'An error occurred',
-      response.status,
-      data.errors
+      error.message || 'Network Error',
+      status
     );
   }
-
-  return data;
+  
+  // Non-axios error
+  throw new ApiError('An unexpected error occurred', 500);
 }
 
 export const api = {
   async get<T>(endpoint: string, token?: string): Promise<ApiResponse<T>> {
-    const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-    });
-
-    return handleResponse<T>(response);
+    try {
+      const response = await axiosInstance.get<T>(endpoint, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      return handleResponse<T>(response);
+    } catch (error) {
+      handleError(error);
+      throw error; // Make TS happy, handleError always throws
+    }
   },
 
   async post<T>(
@@ -45,16 +71,15 @@ export const api = {
     data: any,
     token?: string
   ): Promise<ApiResponse<T>> {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      body: JSON.stringify(data),
-    });
-
-    return handleResponse<T>(response);
+    try {
+      const response = await axiosInstance.post<T>(endpoint, data, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      return handleResponse<T>(response);
+    } catch (error) {
+      handleError(error);
+      throw error;
+    }
   },
 
   async put<T>(
@@ -62,28 +87,27 @@ export const api = {
     data: any,
     token?: string
   ): Promise<ApiResponse<T>> {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      body: JSON.stringify(data),
-    });
-
-    return handleResponse<T>(response);
+    try {
+      const response = await axiosInstance.put<T>(endpoint, data, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      return handleResponse<T>(response);
+    } catch (error) {
+      handleError(error);
+      throw error;
+    }
   },
 
   async delete<T>(endpoint: string, token?: string): Promise<ApiResponse<T>> {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-    });
-
-    return handleResponse<T>(response);
+    try {
+      const response = await axiosInstance.delete<T>(endpoint, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      return handleResponse<T>(response);
+    } catch (error) {
+      handleError(error);
+      throw error;
+    }
   },
 
   async patch<T>(
@@ -91,16 +115,15 @@ export const api = {
     data: any,
     token?: string
   ): Promise<ApiResponse<T>> {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      body: JSON.stringify(data),
-    });
-
-    return handleResponse<T>(response);
+    try {
+      const response = await axiosInstance.patch<T>(endpoint, data, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      return handleResponse<T>(response);
+    } catch (error) {
+      handleError(error);
+      throw error;
+    }
   },
 };
 
@@ -135,15 +158,19 @@ export const userApi = {
   updateProfile: (data: any, token: string) =>
     api.put('/user/profile', data, token),
 
-  updateAvatar: (formData: FormData, token: string) => {
-    // Handle file upload separately
-    return fetch(`${API_BASE_URL}/user/avatar`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    });
+  updateAvatar: async (formData: FormData, token: string) => {
+    try {
+      const response = await axiosInstance.post('/user/avatar', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data', 
+        },
+      });
+      return response; 
+    } catch (error) {
+       handleError(error);
+       throw error;
+    }
   },
 
   changePassword: (

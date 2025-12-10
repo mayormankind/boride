@@ -13,7 +13,7 @@ import { PasswordInput } from '../ui/password-input';
 const riderSchema = z.object({
   fullName: z.string().min(1, 'Full name is required').regex(/^[a-zA-Z\s]+$/, 'Only letters and spaces allowed'),
   email: z.string().email('Invalid email address'),
-  phone: z.string().regex(/^\+234\d{10}$/, 'Phone must be +234 followed by 10 digits'),
+  phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits (omit +234)'),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Must include uppercase, lowercase, and number'),
@@ -25,20 +25,20 @@ const riderSchema = z.object({
 
 type RiderForm = z.infer<typeof riderSchema>;
 
-export default function RiderRegisterForm({ onSubmit, isSubmitting }: { onSubmit: (data: RiderForm) => void, isSubmitting: boolean }) {
+export default function RiderRegisterForm({ onSubmit, isSubmitting }: { onSubmit: (data: any) => void, isSubmitting: boolean }) {
   const {
     register,
     handleSubmit,
     formState: { errors, isValid },
-    reset,
   } = useForm<RiderForm>({
     resolver: zodResolver(riderSchema),
     mode: 'onChange',
   });
 
   const handleFormSubmit = (data: RiderForm) => {
-    onSubmit(data);
-    reset();
+    const { confirmPassword, phone, ...rest } = data;
+    const payload = { ...rest, phoneNo: `+234${phone}` };
+    onSubmit(payload);
   };
 
   return (
@@ -140,7 +140,7 @@ export default function RiderRegisterForm({ onSubmit, isSubmitting }: { onSubmit
         disabled={!isValid}
         className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold"
       >
-        {isSubmitting ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : "Sign Up as Rider"}
+        {isSubmitting ? <><Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> Submitting...</> : "Sign Up as Rider"}
       </Button>
     </form>
   );

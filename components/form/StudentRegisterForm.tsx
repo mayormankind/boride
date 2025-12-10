@@ -15,7 +15,7 @@ const studentSchema = z.object({
     /^[a-zA-Z]+[a-zA-Z]\d{4}@student\.babcock\.edu\.ng$/,
     'Email must be Surname+Initial+Last4Digits@student.babcock.edu.ng'
   ),
-  phone: z.string().regex(/^\+234\d{10}$/, 'Phone must be +234 followed by 10 digits'),
+  // phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits (omit +234)'),
   password: z.string().min(8, 'Password must be at least 8 characters')
     .regex(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Must include letter, number, and uppercase character'),
   confirmPassword: z.string(),
@@ -27,20 +27,23 @@ const studentSchema = z.object({
 
 type StudentForm = z.infer<typeof studentSchema>;
 
-export default function StudentRegisterForm({ onSubmit, isSubmitting }: { onSubmit: (data: StudentForm) => void, isSubmitting: boolean }) {
+export default function StudentRegisterForm({ onSubmit, isSubmitting }: { onSubmit: (data: any) => Promise<void>, isSubmitting: boolean }) {
   const {
     register,
     handleSubmit,
     formState: { errors, isValid },
-    reset,
   } = useForm<StudentForm>({
     resolver: zodResolver(studentSchema),
     mode: 'onChange',
   });
 
-  const handleFormSubmit = (data: StudentForm) => {
-    onSubmit(data);  
-    reset();
+  const handleFormSubmit = async (data: StudentForm) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { confirmPassword, ...rest } = data;
+    // Phone is commented out as it is not needed for now
+    // const payload = { ...rest, phone: `+234${data.phone}` };
+    const payload = { ...rest };
+    await onSubmit(payload);
   };
 
   return (
@@ -98,7 +101,7 @@ export default function StudentRegisterForm({ onSubmit, isSubmitting }: { onSubm
       </div>
 
       {/* Phone */}
-      <div>
+      {/* <div>
         <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
           Phone Number
         </label>
@@ -115,7 +118,7 @@ export default function StudentRegisterForm({ onSubmit, isSubmitting }: { onSubm
           />
         </div>
         {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone.message}</p>}
-      </div>
+      </div> */}
 
       {/* Password */}
       <div>
@@ -159,7 +162,7 @@ export default function StudentRegisterForm({ onSubmit, isSubmitting }: { onSubm
         disabled={!isValid}
         className="w-full bg-student-primary hover:bg-emerald-600 text-white font-semibold"
       >
-        {isSubmitting ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : "Get Started as Student"}
+        {isSubmitting ? <><Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> Submitting...</> : "Get Started as Student"}
       </Button>
     </form>
   );

@@ -21,21 +21,31 @@ export default function RegisterPage() {
   const handleStudentSubmit = async (data: any) => {
     setisSubmitting(true)
     try{
-      await api.post("/student/register",data);
       console.log('Student registration data:', data);
-      toast.success('Logged in successfully')
+      const res = await api.post("/student/register",data);
+      toast.success(res.message ?? 'Logged in successfully')
       router.push('/auth/verify');
     }catch(err:any){
-      console.log(err.response.data.message)
-      toast.error(err.response.data.message)
+      console.log(err.message)
+      toast.error(err.message)
+    }finally{
+      setisSubmitting(false)
     }
-    setisSubmitting(false)
   };
 
-  const handleRiderSubmit = (data: any) => {
-    console.log('Rider registration data:', data);
-    router.push('/auth/verify');
-    // TODO: Implement rider registration API call
+  const handleRiderSubmit = async (data: any) => {
+    setisSubmitting(true);
+    try {
+      const res = await api.post("/driver/register", data);
+      console.log('Rider registration data:', data);
+      toast.success(res.message ?? 'Registration successful');
+      router.push('/auth/login'); 
+    } catch (err: any) {
+      console.log(err.message);
+      toast.error(err.message);
+    } finally {
+      setisSubmitting(false);
+    }
   };
 
   const studentColor = {
