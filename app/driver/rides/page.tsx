@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MapPin, Navigation, Phone, Play, Square, CheckCircle, Calendar, User, Car as CarIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,12 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useRideStore } from '@/lib/stores/rideStore';
 import { useDriverStore } from '@/lib/stores/driverStore';
+import { useAuthStore } from '@/lib/stores/authStore';
+import { rideApi } from '@/lib/api';
 import DriverBottomNav from '@/components/shared/DriverBottomNav';
+
+import { toast } from 'sonner';
+import { mapBackendRideToStoreRide } from '@/lib/mapper';
 
 const STATUS_CONFIG = {
   pending: { label: 'Pending', color: 'bg-yellow-500' },
@@ -21,43 +26,85 @@ const STATUS_CONFIG = {
 };
 
 export default function DriverRidesPage() {
+  const token = useAuthStore((state) => state.token);
   const activeRide = useRideStore((state) => state.activeRide);
+  const rideHistory = useRideStore((state) => state.rideHistory);
+  const setActiveRide = useRideStore((state) => state.setActiveRide);
   const updateRideStatus = useRideStore((state) => state.updateRideStatus);
   const clearActiveRide = useRideStore((state) => state.clearActiveRide);
   const addToHistory = useRideStore((state) => state.addToHistory);
-  const rideHistory = useRideStore((state) => state.rideHistory);
+
   const updateStats = useDriverStore((state) => state.updateStats);
   const stats = useDriverStore((state) => state.stats);
 
+  const [localHistory, setLocalHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    if(token) {
+        rideApi.getDriverRides(token).then(res => {
+            if(res.success) {
+                setLocalHistory(res.rides.map(mapBackendRideToStoreRide));
+
+                const current = (res.rides).find((r: any) => ['accepted', 'on-the-way', 'in-trip'].includes(r.status));
+                if(current && !activeRide) {
+                     setActiveRide(mapBackendRideToStoreRide(current));
+                }
+            }
+        });
+    }
+  }, [token]);
+
   const [activeTab, setActiveTab] = useState('active');
 
-  const handleStartTrip = () => {
-    if (activeRide) {
-      updateRideStatus(activeRide.id, 'in-trip');
+  const handleStartTrip = async () => {
+    if (activeRide && token) {
+      try {
+          const res = await rideApi.startRide(activeRide.id, token);
+          if (res.success) {
+            updateRideStatus(activeRide.id, 'in-trip');
+            toast.success("Ride started");
+          } else {
+             toast.error(res.message || "Failed to start ride");
+          }
+      } catch (e: any) {
+          toast.error(e.message || "Error starting ride");
+      }
     }
   };
 
-  const handleEndTrip = () => {
-    if (activeRide) {
-      const completedRide = {
-        ...activeRide,
-        status: 'completed' as const,
-        actualFare: activeRide.estimatedFare,
-        completedAt: new Date(),
-      };
-      
-      // Update stats
-      updateStats({
-        completedTrips: stats.completedTrips + 1,
-        dailyEarnings: stats.dailyEarnings + (activeRide.estimatedFare || 0),
-        weeklyEarnings: stats.weeklyEarnings + (activeRide.estimatedFare || 0),
-        monthlyEarnings: stats.monthlyEarnings + (activeRide.estimatedFare || 0),
-        totalEarnings: stats.totalEarnings + (activeRide.estimatedFare || 0),
-        totalTrips: stats.totalTrips + 1,
-      });
+  const handleEndTrip = async () => {
+    if (activeRide && token) {
+      try {
+          // Mocking distance/duration for now as we don't have GPS tracking implemented here
+          const res = await rideApi.completeRide(activeRide.id, { actualDistance: 5, actualDuration: 15 }, token);
+          if (res.success) {
+               // Update stats locally or re-fetch?
+               // Let's rely on the store update that we do manually for immediate feedback
+               // or better yet, fetch fresh stats?
+               
+              updateStats({
+                completedTrips: stats.completedTrips + 1,
+                dailyEarnings: stats.dailyEarnings + (activeRide.estimatedFare || 0),
+                weeklyEarnings: stats.weeklyEarnings + (activeRide.estimatedFare || 0),
+                monthlyEarnings: stats.monthlyEarnings + (activeRide.estimatedFare || 0),
+                totalEarnings: stats.totalEarnings + (activeRide.estimatedFare || 0),
+                totalTrips: stats.totalTrips + 1,
+              });
 
-      addToHistory(completedRide);
-      clearActiveRide();
+              addToHistory({
+                ...activeRide,
+                status: 'completed',
+                completedAt: new Date(),
+                actualFare: activeRide.estimatedFare
+              });
+              clearActiveRide();
+              toast.success("Ride completed!");
+          } else {
+              toast.error(res.message || "Failed to complete ride");
+          }
+      } catch (e: any) {
+          toast.error(e.message || "Error completing ride");
+      }
     }
   };
 
@@ -208,9 +255,9 @@ export default function DriverRidesPage() {
           {/* Ride History Tab */}
           <TabsContent value="history" className="mt-0">
             <div className="space-y-4">
-              {rideHistory.length > 0 ? (
-                rideHistory.map((ride) => (
-                  <Card key={ride.id} className="hover:shadow-md transition-shadow">
+              {localHistory.length > 0 ? (
+                localHistory.map((ride) => (
+                  <Card key={ride._id || ride.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
@@ -223,8 +270,8 @@ export default function DriverRidesPage() {
                             <p className="font-medium text-sm">{ride.destination}</p>
                           </div>
                         </div>
-                        <Badge className={`${STATUS_CONFIG[ride.status]?.color} text-white`}>
-                          {STATUS_CONFIG[ride.status]?.label}
+                        <Badge className={`${STATUS_CONFIG[ride.status as keyof typeof STATUS_CONFIG]?.color || 'bg-gray-500'} text-white`}>
+                          {STATUS_CONFIG[ride.status as keyof typeof STATUS_CONFIG]?.label || ride.status}
                         </Badge>
                       </div>
 

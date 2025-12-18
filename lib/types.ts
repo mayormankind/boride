@@ -100,11 +100,45 @@ export interface DriverStats {
   averageResponseTime?: number; // in seconds
 }
 
+export interface WalletTransaction {
+  id: string;
+  _id?: string; // Handle potential mongo _id
+  userId: string;
+  amount: number;
+  type: 'credit' | 'debit';
+  description: string;
+  reference?: string;
+  status: 'pending' | 'success' | 'failed';
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+export interface WalletData {
+    balance: number;
+    currency: string;
+    transaction: any;
+}
+
+export interface WalletTransactionsData {
+    transactions: WalletTransaction[];
+    pagination?: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    }
+}
+
+export interface WithdrawResponse extends WalletData {
+    transaction: WalletTransaction;
+}
+
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
   message?: string;
   errors?: Record<string, string[]>;
+  [key: string]: any;
 }
 
 export interface PaginatedResponse<T = any> {
@@ -115,4 +149,30 @@ export interface PaginatedResponse<T = any> {
     total: number;
     totalPages: number;
   };
+}
+
+export interface StudentRidesResponse {
+  rides: any[];
+  count: number;
+}
+
+export interface BackendRide {
+  _id: string;
+  pickupLocation: {
+    address: string;
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  dropoffLocation: {
+    address: string;
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  fare: number;
+  status: string;
+  createdAt: string;
 }

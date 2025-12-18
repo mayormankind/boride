@@ -1,3 +1,4 @@
+//lib/stores/rideStore.ts
 import { create } from 'zustand';
 
 export interface Ride {

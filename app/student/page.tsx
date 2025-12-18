@@ -1,15 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { MapPin, Navigation, Clock, ChevronRight, Car } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { MapPin, Navigation, Clock, ChevronRight, Car, Loader2Icon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { useRideStore } from '@/lib/stores/rideStore';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
+import { rideApi, walletApi } from '@/lib/api';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+import { PaymentMethodModal } from '@/components/shared/PaymentMethodModal';
+import { BackendRide } from '@/lib/types';
 
 const SAVED_LOCATIONS = [
   { id: '1', name: 'Hostel', address: 'Student Hostel Block A' },
@@ -18,24 +22,117 @@ const SAVED_LOCATIONS = [
   { id: '4', name: 'Sports Complex', address: 'Campus Sports Arena' },
 ];
 
+const ESTIMATED_FARE = 500;
+
 export default function StudentDashboard() {
   const user = useAuthStore((state) => state.user);
-  const rideHistory = useRideStore((state) => state.rideHistory);
+  const token = useAuthStore((state) => state.token);
+
+  const [rides, setRides] = useState<BackendRide[]>([]);
   const [pickup, setPickup] = useState('');
   const [destination, setDestination] = useState('');
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingRides, setIsFetchingRides] = useState(true);
 
-  const handleRequestRide = () => {
-    if (!pickup || !destination) return;
-    // TODO: Implement ride request logic
-    alert("Information is being broadcast to availible riders. Please wait!")
-    console.log('Requesting ride:', { pickup, destination });
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (token) {
+      fetchRecentRides();
+    }
+  }, [token]);
+
+  const fetchRecentRides = async () => {
+    try {
+      const res = await rideApi.getStudentRides(token!);
+  
+      if (!res.success) {
+        throw new Error(res.message || 'Failed to fetch rides');
+      }
+  
+      setRides((res.rides || []).slice(0, 3));
+    } catch (error) {
+      console.error('Failed to fetch rides', error);
+    } finally {
+      setIsFetchingRides(false);
+    }
   };
 
-  const recentRides = rideHistory.slice(0, 3);
+  // Step 1: Fetch wallet balance and open payment modal
+  const handleRequestRide = async () => {
+    if (!pickup || !destination || !token) return;
+
+    setIsLoading(true);
+    try {
+      const walletRes = await walletApi.getWalletBalance(token, 'student');
+      if (!walletRes.success) {
+        throw new Error('Failed to fetch wallet balance');
+      }
+
+      const balance = walletRes.balance || 0;
+      setWalletBalance(balance); // ✅ Store real balance
+      setShowPaymentModal(true);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Could not load wallet. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Step 2: Confirm and book ride
+  const handleConfirmPayment = async (method: 'Cash' | 'Wallet') => {
+    if (!pickup || !destination || !token) return;
+
+    setIsLoading(true);
+    try {
+      const payload = {
+        pickupLocation: {
+          address: pickup,
+          coordinates: { latitude: 0, longitude: 0 },
+        },
+        dropoffLocation: {
+          address: destination,
+          coordinates: { latitude: 0, longitude: 0 },
+        },
+        fare: ESTIMATED_FARE,
+        paymentMethod: method,
+        estimatedDistance: 2.5,
+        estimatedDuration: 15,
+      };
+
+      const res = await rideApi.bookRide(payload, token);
+
+      if (res.success) {
+        toast.success("Ride requested successfully!");
+        setPickup('');
+        setDestination('');
+        fetchRecentRides();
+      } else {
+        toast.error(res.message || "Failed to book ride");
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "An error occurred");
+    } finally {
+      setIsLoading(false);
+      setShowPaymentModal(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-student-bg via-white to-gray-50 pb-20">
+      <PaymentMethodModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onConfirm={handleConfirmPayment}
+        fare={ESTIMATED_FARE}
+        walletBalance={walletBalance}
+      />
+
       {/* Header */}
       <div className="bg-gradient-to-r from-student-primary to-student-dark p-6 text-white rounded-b-3xl shadow-lg">
         <div className="flex items-center justify-between mb-4">
@@ -64,7 +161,6 @@ export default function StudentDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Pickup Location */}
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-student-primary" />
               <Input
@@ -75,7 +171,6 @@ export default function StudentDashboard() {
               />
             </div>
 
-            {/* Destination */}
             <div className="relative">
               <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-600" />
               <Input
@@ -86,13 +181,13 @@ export default function StudentDashboard() {
               />
             </div>
 
-            {/* Request Button */}
             <Button
               onClick={handleRequestRide}
-              disabled={!pickup || !destination}
+              disabled={!pickup || !destination || isLoading}
               className="w-full h-12 bg-gradient-to-r from-student-primary to-student-dark hover:from-student-dark hover:to-student-hover text-white font-semibold text-base shadow-md disabled:from-gray-300 disabled:to-gray-400 transition-all duration-300"
             >
-              Request Ride
+              {isLoading ? <Loader2Icon className="animate-spin mr-2" /> : null}
+              {isLoading ? "Requesting..." : "Request Ride"}
             </Button>
           </CardContent>
         </Card>
@@ -130,8 +225,8 @@ export default function StudentDashboard() {
             <Clock className="w-5 h-5 text-student-primary" />
             Recent Rides
           </h2>
-          
-          {isLoading ? (
+
+          {isFetchingRides ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <Card key={i}>
@@ -141,24 +236,33 @@ export default function StudentDashboard() {
                 </Card>
               ))}
             </div>
-          ) : recentRides.length > 0 ? (
+          ) : rides.length > 0 ? (
             <div className="space-y-3">
-              {recentRides.map((ride) => (
-                <Card key={ride.id} className="hover:shadow-md transition-shadow">
+              {rides.map((ride) => (
+                <Card key={ride._id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <MapPin className="w-4 h-4 text-gray-400" />
-                          <p className="font-medium text-sm">{ride.pickupLocation}</p>
+                          <p className="font-medium text-sm">{ride.pickupLocation.address}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Navigation className="w-4 h-4 text-emerald-600" />
-                          <p className="font-medium text-sm">{ride.destination}</p>
+                          <p className="font-medium text-sm">{ride.dropoffLocation.address}</p>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">
-                          {new Date(ride.requestedAt).toLocaleDateString()} • ₦{ride.actualFare || ride.estimatedFare}
-                        </p>
+                        <div className="flex gap-2 mt-2 items-center">
+                          <p className="text-xs text-gray-500">
+                            {new Date(ride.createdAt).toLocaleDateString()} • ₦{ride.fare}
+                          </p>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                            ride.status === 'completed' ? 'bg-green-100 text-green-700' :
+                            ride.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {ride.status}
+                          </span>
+                        </div>
                       </div>
                       <ChevronRight className="w-5 h-5 text-gray-400" />
                     </div>

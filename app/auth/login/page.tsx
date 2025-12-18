@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Lock, Mail } from 'lucide-react';
+import { Loader2Icon, Lock, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +12,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { PasswordInput } from '@/components/ui/password-input';
-import { api } from '@/lib/api';
+import { authApi } from '@/lib/api';
+import { useAuthStore } from '@/lib/stores/authStore';
 import { BorideLogo } from '@/components/ui/boride-logo';
 import { toast } from 'sonner';
 import { buildDriverPayload, buildStudentPayload } from '@/lib/helpers';
@@ -86,15 +87,44 @@ export default function LoginPage() {
           ? buildStudentPayload(data)
           : buildDriverPayload(data);
   
-      const url =
-        detectedRole === "student"
-          ? "/student/login"
-          : "/driver/login";
+      let res;
+      if (detectedRole === 'student') {
+        res = await authApi.studentLogin(payload);
+      } else if (detectedRole === 'driver') {
+        res = await authApi.driverLogin(payload);
+      } else {
+        // Fallback for when role is not clearly detected but validation passed
+        // Try student first, then driver as a fallback
+        try {
+           res = await authApi.studentLogin(payload);
+        } catch (e) {
+           res = await authApi.driverLogin(payload);
+        }
+      }
   
-      await api.post(url, payload);
-  
-      toast.success("Logged in successfully");
-      router.push(`/${detectedRole}`);
+      if (res && res.success) {
+        const rawUser = res.student || res.driver;
+        const role = res.student ? 'student' : 'driver';
+        
+        // Map backend fields to frontend User interface
+        const user = {
+            id: rawUser.id || rawUser._id,
+            fullName: rawUser.fullName,
+            email: rawUser.email,
+            phone: rawUser.phoneNo || rawUser.phone || '',
+            role: role as 'student' | 'driver',
+            matricNo: rawUser.matricNo,
+            vehicleInfo: rawUser.vehicleInfo,
+            avatar: rawUser.profileImage || rawUser.avatar, 
+        };
+
+        useAuthStore.getState().login(user, res.token);
+        
+        toast.success("Logged in successfully");
+        router.push(role === 'student' ? '/student' : '/driver');
+      } else {
+         toast.error(res?.message || "Login failed");
+      }
     } catch (err: any) {
       console.log(err);
       toast.error(err.response?.data?.message || "Login failed");
@@ -127,7 +157,6 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <BorideLogo/>
-
             <h1 className="text-2xl font-bold">Welcome Back</h1>
             <p className="text-muted-foreground mt-2">
               Log in and pick up right where you left off
@@ -140,13 +169,7 @@ export default function LoginPage() {
               <Label htmlFor="identifier">Email or Matric Number</Label>
               <div className="relative mt-1">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  id="identifier"
-                  placeholder="Ojomup9338@student.babcock.edu.ng or 04/2025"
-                  className={`pl-10 ${
-                    errors.identifier ? 'border-red-500' : ''
-                  }`}
-                  {...register('identifier')}
+                <Input id="identifier" placeholder="Ojomup9338@student.babcock.edu.ng or 04/2025" className={`pl-10 ${errors.identifier ? 'border-red-500' : ''}`} {...register('identifier')}
                 />
               </div>
               {errors.identifier && (
@@ -168,14 +191,7 @@ export default function LoginPage() {
               <Label htmlFor="password">Password</Label>
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <PasswordInput
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  className={`pl-10 ${
-                    errors.password ? 'border-red-500' : ''
-                  }`}
-                  {...register('password')}
+                <PasswordInput id="password" type="password" placeholder="••••••••" className={`pl-10 ${errors.password ? 'border-red-500' : ''}`} {...register('password')}
                 />
               </div>
               {errors.password && (
@@ -195,30 +211,15 @@ export default function LoginPage() {
             </div>
 
             {/* Submit */}
-            <Button
-              type="submit"
-              size="lg"
-              disabled={!isValid || isSubmitting}
-              variant={
-                detectedRole === 'student'
-                  ? 'student'
-                  : detectedRole === 'driver'
-                  ? 'rider'
-                  : 'default'
-              }
-              className="w-full"
+            <Button type="submit" size="lg" disabled={!isValid || isSubmitting}
+              variant={detectedRole === 'student' ? 'student' : detectedRole === 'driver' ? 'rider' : 'default'} className="w-full"
             >
-              {isSubmitting ? 'Logging In...' : 'Log In'}
+              {isSubmitting ? <><Loader2Icon className="mr-2 h-4 w-4 animate-spin"/> Logging In...</> : 'Log In'}
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">
               Don’t have an account?{' '}
-              <Link
-                href="/auth/register"
-                className="font-medium text-primary hover:text-primary/80"
-              >
-                Create Account
-              </Link>
+              <Link href="/auth/register" className="font-medium text-primary hover:text-primary/80">Create Account</Link>
             </div>
           </form>
         </div>

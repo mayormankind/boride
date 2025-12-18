@@ -1,21 +1,26 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2Icon } from 'lucide-react';
 import { BorideLogo } from '@/components/ui/boride-logo';
 import { toast } from 'sonner';
-import { api } from '@/lib/api';
+import { authApi } from '@/lib/api';
 
-export default function VerifyPage() {
+function VerifyForm() {
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get('email');
+  const role = searchParams.get('role');
+
+  const [resending, setResending] = useState(false);
 
   // Focus next input on key press
   const handleChange = (index: number, value: string) => {
@@ -31,9 +36,9 @@ export default function VerifyPage() {
     }
 
     // Auto-submit when all filled
-    if (newOtp.every(digit => digit !== '')) {
-      document.getElementById('verify-button')?.click();
-    }
+    // if (newOtp.every(digit => digit !== '')) {
+    //   document.getElementById('verify-button')?.click();
+    // }
   };
 
   // Handle backspace to go to previous input
@@ -45,42 +50,50 @@ export default function VerifyPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email || !role) {
+        toast.error("Missing email or role information");
+        return;
+    }
+
     setIsSubmitting(true);
     try{
-      await api.post("/verify",otp.join(""));
-      console.log('Student verification data:', otp.join(""));
-      toast.success('Logged in successfully')
-      router.push('/auth/login')
+      const otpCode = otp.join("");
+      let res;
+      if (role === 'student') {
+        res = await authApi.studentVerifyEmail({ email, otp: otpCode });
+      } else {
+        res = await authApi.driverVerifyEmail({ email, otp: otpCode });
+      }
+      
+      toast.success(res.message || 'Verification successful');
+      router.push('/auth/login');
     }catch(err:any){
-      toast.error(err.response.data.message)
+      console.log(err);
+      toast.error(err.response?.data?.message || err.message || "Verification failed");
     }
     setIsSubmitting(false);
+  };
+
+  const handleResend = async () => {
+    if (!email || !role) return toast.error("Missing email or role");
+    setResending(true);
+    try {
+        if (role === 'student') {
+            await authApi.studentResendOtp({ email });
+        } else {
+            await authApi.driverResendOtp({ email });
+        }
+        toast.success("OTP resent successfully");
+    } catch (err: any) {
+        toast.error(err.message || "Failed to resend OTP");
+    }
+    setResending(false);
   };
 
   const isValid = otp.every(digit => digit !== '');
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Left Column - Illustration (Desktop Only) */}
-      <div className="hidden lg:flex lg:w-1/2 relative">
-        <Image priority width={1000} height={1000}
-          src="/img/left-onboard.svg"
-          alt="Boride Login"
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center flex-col">
-          <BorideLogo type="light"/>
-          <div className="text-[#ffe345] text-center px-8 max-w-md">
-            <h1 className="text-3xl font-bold mb-4">Verify Your Email</h1>
-            <p className="text-lg text-[#ffe345]/90">
-              We’ve sent a 6-digit code to your email. Enter it below to complete registration.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Column - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12">
+    <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md">
 
           <BorideLogo/>
@@ -88,7 +101,7 @@ export default function VerifyPage() {
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-bold">Verify Your Email</h1>
             <p className="text-muted-foreground mt-2">
-              Enter the 6-digit code sent to your email
+              Enter the 6-digit code sent to {email || 'your email'}
             </p>
           </div>
 
@@ -140,9 +153,10 @@ export default function VerifyPage() {
               <button
                 type="button"
                 className="font-medium text-primary hover:text-primary/80 underline"
-                onClick={() => alert('Resend code')}
+                onClick={handleResend}
+                disabled={resending}
               >
-                Resend Code
+                {resending ? 'Resending...' : 'Resend Code'}
               </button>
             </div>
 
@@ -156,6 +170,33 @@ export default function VerifyPage() {
           </form>
         </div>
       </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <div className="flex min-h-screen bg-background">
+      {/* Left Column - Illustration (Desktop Only) */}
+      <div className="hidden lg:flex lg:w-1/2 relative">
+        <Image priority width={1000} height={1000}
+          src="/img/left-onboard.svg"
+          alt="Boride Login"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center flex-col">
+          <BorideLogo type="light"/>
+          <div className="text-[#ffe345] text-center px-8 max-w-md">
+            <h1 className="text-3xl font-bold mb-4">Verify Your Email</h1>
+            <p className="text-lg text-[#ffe345]/90">
+              We’ve sent a 6-digit code to your email. Enter it below to complete registration.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <Suspense fallback={<div>Loading...</div>}>
+         <VerifyForm />
+      </Suspense>
     </div>
   );
 }

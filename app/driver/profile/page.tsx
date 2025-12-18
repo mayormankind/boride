@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { authApi } from '@/lib/api';
 import DriverBottomNav from '@/components/shared/DriverBottomNav';
 import { useRouter } from 'next/navigation';
 
 export default function DriverProfilePage() {
   const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
   const updateUser = useAuthStore((state) => state.updateUser);
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
@@ -22,10 +24,15 @@ export default function DriverProfilePage() {
     phone: user?.phone || '',
   });
 
-  const handleSave = () => {
-    updateUser(formData);
-    setIsEditing(false);
-    // TODO: Save to backend
+  const handleSave = async () => {
+    if(!token) return;
+    try {
+        await authApi.driverUpdateProfile(formData, token);
+        updateUser(formData);
+        setIsEditing(false);
+    } catch (e) {
+        console.error(e);
+    }
   };
 
   const handleLogout = () => {

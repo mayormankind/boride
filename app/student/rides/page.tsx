@@ -1,6 +1,7 @@
+//app/student/rides
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MapPin, Navigation, Phone, MessageCircle, User, Car, Calendar } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useRideStore } from '@/lib/stores/rideStore';
+import { useAuthStore } from '@/lib/stores/authStore';
+import { rideApi } from '@/lib/api';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
 
 const STATUS_CONFIG = {
@@ -19,10 +22,67 @@ const STATUS_CONFIG = {
   cancelled: { label: 'Cancelled', color: 'bg-red-500' },
 };
 
+type RideStatus = keyof typeof STATUS_CONFIG;
+
+import { RateRideModal } from '@/components/shared/RateRideModal';
+import { toast } from 'sonner';
+import { mapBackendRideToStoreRide } from '@/lib/mapper';
+
 export default function StudentRidesPage() {
+  const token = useAuthStore((state) => state.token);
+
   const activeRide = useRideStore((state) => state.activeRide);
   const rideHistory = useRideStore((state) => state.rideHistory);
+  const setActiveRide = useRideStore((state) => state.setActiveRide);
+
+
+  const [localHistory, setLocalHistory] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('active');
+  const [rateModalOpen, setRateModalOpen] = useState(false);
+  const [selectedRideId, setSelectedRideId] = useState<string | null>(null);
+  const [selectedDriverName, setSelectedDriverName] = useState<string>('');
+
+  const handleRateClick = (ride: any) => {
+      setSelectedRideId(ride._id || ride.id);
+      setSelectedDriverName(ride.driver?.fullName || 'the driver');
+      setRateModalOpen(true);
+  };
+
+  const handleRateSubmit = async (rating: number, review?: string) => {
+      if (!selectedRideId || !token) return;
+      try {
+          const res = await rideApi.rateRide(selectedRideId, { rating, review }, token);
+          if (res.success) {
+              toast.success("Rating submitted!");
+              // Update local history to show it's rated
+              setLocalHistory(prev => prev.map(r => 
+                  (r._id === selectedRideId || r.id === selectedRideId) ? { ...r, rating } : r
+              ));
+          } else {
+              toast.error(res.message || "Failed to submit rating");
+          }
+      } catch (e: any) {
+          toast.error(e.message || "Error submitting rating");
+      }
+  };
+
+  useEffect(() => {
+    if (!token) return;
+  
+    rideApi.getStudentRides(token).then((res) => {
+      if (!res.success) return;
+  
+      setLocalHistory(res.rides.map(mapBackendRideToStoreRide));
+  
+      const current = res.rides.find((r: any) =>
+        ['pending', 'accepted', 'on-the-way', 'in-trip'].includes(r.status)
+      );
+  
+      if (current && !activeRide) {
+        setActiveRide(mapBackendRideToStoreRide(current));
+      }
+    });
+  }, [token, activeRide, setActiveRide]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-student-bg via-white to-gray-50 pb-20">
@@ -163,9 +223,9 @@ export default function StudentRidesPage() {
           {/* Ride History Tab */}
           <TabsContent value="history" className="mt-0">
             <div className="space-y-4">
-              {rideHistory.length > 0 ? (
-                rideHistory.map((ride) => (
-                  <Card key={ride.id} className="hover:shadow-md transition-shadow">
+              {localHistory.length > 0 ? (
+                localHistory.map((ride) => (
+                  <Card key={ride._id || ride.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
@@ -178,8 +238,8 @@ export default function StudentRidesPage() {
                             <p className="font-medium text-sm">{ride.destination}</p>
                           </div>
                         </div>
-                        <Badge className={`${STATUS_CONFIG[ride.status]?.color} text-white`}>
-                          {STATUS_CONFIG[ride.status]?.label}
+                        <Badge className={`${STATUS_CONFIG[ride.status as RideStatus]?.color || 'bg-gray-500'} text-white`}>
+                          {STATUS_CONFIG[ride.status as RideStatus]?.label || ride.status}
                         </Badge>
                       </div>
 
@@ -200,6 +260,18 @@ export default function StudentRidesPage() {
                           ₦{(ride.actualFare || ride.estimatedFare)?.toLocaleString()}
                         </p>
                       </div>
+                      
+                      {ride.status === 'completed' && !ride.rating && (
+                          <div className="mt-3 pt-2 border-t text-center">
+                              <Button 
+                                variant="ghost" 
+                                className="text-student-primary hover:text-student-dark hover:bg-student-primary/5 w-full h-8 px-2"
+                                onClick={() => handleRateClick(ride)}
+                              >
+                                  Rate Driver
+                              </Button>
+                          </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))
@@ -218,6 +290,13 @@ export default function StudentRidesPage() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      <RateRideModal 
+        isOpen={rateModalOpen} 
+        onClose={() => setRateModalOpen(false)} 
+        onSubmit={handleRateSubmit}
+        driverName={selectedDriverName}
+      />
 
       <StudentBottomNav />
     </div>

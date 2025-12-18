@@ -1,7 +1,7 @@
-import axios, { AxiosError, AxiosResponse } from 'axios';
-import type { ApiResponse } from './types';
+import axios, { AxiosResponse } from 'axios';
+import type { ApiResponse, StudentRidesResponse, WalletData, WalletTransactionsData } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export class ApiError extends Error {
   constructor(
@@ -53,6 +53,7 @@ function handleError(error: unknown) {
   throw new ApiError('An unexpected error occurred', 500);
 }
 
+// Base API methods
 export const api = {
   async get<T>(endpoint: string, token?: string): Promise<ApiResponse<T>> {
     try {
@@ -62,7 +63,7 @@ export const api = {
       return handleResponse<T>(response);
     } catch (error) {
       handleError(error);
-      throw error; // Make TS happy, handleError always throws
+      throw error;
     }
   },
 
@@ -109,82 +110,66 @@ export const api = {
       throw error;
     }
   },
-
-  async patch<T>(
-    endpoint: string,
-    data: any,
-    token?: string
-  ): Promise<ApiResponse<T>> {
-    try {
-      const response = await axiosInstance.patch<T>(endpoint, data, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-      return handleResponse<T>(response);
-    } catch (error) {
-      handleError(error);
-      throw error;
-    }
-  },
 };
 
-// Specific API functions for the app
+// ==================== AUTHENTICATION API ====================
+export const authApi = {
+  // Student
+  studentRegister: (data: any) => api.post('/student/register', data),
+  studentLogin: (data: any) => api.post('/student/login', data),
+  studentVerifyEmail: (data: { email: string; otp: string }) => api.post('/student/verify-email', data),
+  studentResendOtp: (data: { email: string }) => api.post('/student/resend-otp', data),
+  studentUpdateProfile: (data: any, token: string) => api.put('/student/profile', data, token),
+
+  // Driver
+  driverRegister: (data: any) => api.post('/driver/register', data),
+  driverLogin: (data: any) => api.post('/driver/login', data),
+  driverVerifyEmail: (data: { email: string; otp: string }) => api.post('/driver/verify-email', data),
+  driverResendOtp: (data: { email: string }) => api.post('/driver/resend-otp', data),
+  driverUpdateProfile: (data: any, token: string) => api.put('/driver/profile', data, token),
+  driverToggleAvailability: (token: string) => api.put('/driver/availability', {}, token),
+};
+
+// ==================== RIDE API ====================
 export const rideApi = {
-  requestRide: (data: {
-    pickupLocation: string;
-    destination: string;
-    estimatedFare: number;
-  }) => api.post('/rides/request', data),
+  // Student
+  bookRide: (data: any, token: string) => api.post('/student/rides', data, token),
+  getStudentRides: (token: string, status?: string) => 
+    api.get<StudentRidesResponse>(
+      `/student/rides${status ? `?status=${status}` : ''}`,
+      token
+    ),
+  getRideDetails: (rideId: string, token: string, userType: 'student' | 'driver') => 
+    api.get<any>(`/${userType}/rides/${rideId}`, token),
+  cancelRide: (rideId: string, reason: string, token: string, userType: 'student' | 'driver') => 
+    api.put(`/${userType}/rides/${rideId}/cancel`, { reason }, token),
+  rateRide: (rideId: string, data: { rating: number; review?: string }, token: string) => 
+    api.put(`/student/rides/${rideId}/rate`, data, token),
 
-  acceptRide: (rideId: string, token: string) =>
-    api.post(`/rides/${rideId}/accept`, {}, token),
-
-  declineRide: (rideId: string, token: string) =>
-    api.post(`/rides/${rideId}/decline`, {}, token),
-
-  startTrip: (rideId: string, token: string) =>
-    api.post(`/rides/${rideId}/start`, {}, token),
-
-  endTrip: (rideId: string, actualFare: number, token: string) =>
-    api.post(`/rides/${rideId}/complete`, { actualFare }, token),
-
-  getRideHistory: (token: string) => api.get('/rides/history', token),
-
-  getActiveRide: (token: string) => api.get('/rides/active', token),
+  // Driver
+  getAvailableRides: (token: string) => api.get<any[]>('/driver/rides/available', token),
+  getDriverRides: (token: string, status?: string) => 
+    api.get<any[]>(`/driver/rides${status ? `?status=${status}` : ''}`, token),
+  acceptRide: (rideId: string, data: { estimatedArrival: number }, token: string) => 
+    api.put(`/driver/rides/${rideId}/accept`, data, token),
+  startRide: (rideId: string, token: string) => 
+    api.put(`/driver/rides/${rideId}/start`, {}, token),
+  completeRide: (rideId: string, data: { actualDistance: number; actualDuration: number }, token: string) => 
+    api.put(`/driver/rides/${rideId}/complete`, data, token),
 };
 
-export const userApi = {
-  getProfile: (token: string) => api.get('/user/profile', token),
-
-  updateProfile: (data: any, token: string) =>
-    api.put('/user/profile', data, token),
-
-  updateAvatar: async (formData: FormData, token: string) => {
-    try {
-      const response = await axiosInstance.post('/user/avatar', formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data', 
-        },
-      });
-      return response; 
-    } catch (error) {
-       handleError(error);
-       throw error;
-    }
-  },
-
-  changePassword: (
-    data: { currentPassword: string; newPassword: string },
-    token: string
-  ) => api.post('/user/change-password', data, token),
+// ==================== WALLET API ====================
+export const walletApi = {
+  getWalletBalance: (token: string, userType: 'student' | 'driver') => 
+    api.get<WalletData>(`/${userType}/wallet`, token),
+    
+  getTransactionHistory: (token: string, userType: 'student' | 'driver', limit = 20, page = 1) => 
+    api.get<WalletTransactionsData>(`/${userType}/wallet/transactions?limit=${limit}&page=${page}`, token),
+    
+  fundWallet: (data: { amount: number; paymentReference: string }, token: string) => 
+    api.post<WalletData>('/student/wallet/fund', data, token),
+    
+  withdrawFromWallet: (data: { amount: number; bankDetails: any }, token: string) => 
+    api.post<WalletData>('/driver/wallet/withdraw', data, token),
 };
 
-export const driverApi = {
-  setOnlineStatus: (isOnline: boolean, token: string) =>
-    api.post('/driver/status', { isOnline }, token),
-
-  getStats: (token: string) => api.get('/driver/stats', token),
-
-  updateVehicleInfo: (data: any, token: string) =>
-    api.put('/driver/vehicle', data, token),
-};

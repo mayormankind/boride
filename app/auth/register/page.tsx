@@ -8,7 +8,7 @@ import { GraduationCap, Car } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
 
 type UserRole = 'student' | 'rider';
@@ -22,9 +22,9 @@ export default function RegisterPage() {
     setisSubmitting(true)
     try{
       console.log('Student registration data:', data);
-      const res = await api.post("/student/register",data);
-      toast.success(res.message ?? 'Logged in successfully')
-      router.push('/auth/verify');
+      const res = await authApi.studentRegister(data);
+      toast.success(res.message ?? 'Registration successful. Check your email for OTP.');
+      router.push(`/auth/verify?email=${encodeURIComponent(data.email)}&role=student`);
     }catch(err:any){
       console.log(err.message)
       toast.error(err.message)
@@ -36,10 +36,10 @@ export default function RegisterPage() {
   const handleRiderSubmit = async (data: any) => {
     setisSubmitting(true);
     try {
-      const res = await api.post("/driver/register", data);
       console.log('Rider registration data:', data);
-      toast.success(res.message ?? 'Registration successful');
-      router.push('/auth/verify'); 
+      const res = await authApi.driverRegister(data);
+      toast.success(res.message ?? 'Registration successful. Check your email for OTP.');
+      router.push(`/auth/verify?email=${encodeURIComponent(data.email)}&role=driver`); 
     } catch (err: any) {
       console.log(err.message);
       toast.error(err.message);
