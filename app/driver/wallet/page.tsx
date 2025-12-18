@@ -69,10 +69,10 @@ export default function DriverWalletPage() {
           bankDetails // This is just passed to backend for record
       }, token!);
 
-      if (res.success && res.data) {
+      if (res.success) {
         toast.success(`Withdrawal of ₦${withdrawAmount} successful`);
-        setBalance(res.data.balance);
-        setTransactions([res.data.transaction, ...transactions]);
+        setBalance(res.balance);
+        setTransactions([res.transaction, ...transactions]);
         setShowWithdrawModal(false);
         setAmount('');
       } else {

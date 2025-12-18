@@ -34,12 +34,12 @@ export default function StudentWalletPage() {
     try {
       const balanceRes = await walletApi.getWalletBalance(token!, 'student');
       if (balanceRes.success) {
-        setBalance(balanceRes.data.balance);
+        setBalance(balanceRes.balance);
       }
 
       const historyRes = await walletApi.getTransactionHistory(token!, 'student');
       if (historyRes.success) {
-        setTransactions(historyRes.data.transactions);
+        setTransactions(historyRes.transactions);
       }
     } catch (error) {
       console.error('Error fetching wallet data', error);
@@ -65,8 +65,8 @@ export default function StudentWalletPage() {
 
       if (res.success) {
         toast.success(`Successfully funded ₦${fundAmount}`);
-        setBalance(res.data.balance);
-        setTransactions([res.data.transaction, ...transactions]);
+        setBalance(res.balance);
+        setTransactions([res.transaction, ...transactions]);
         setShowFundModal(false);
         setAmount('');
       } else {
