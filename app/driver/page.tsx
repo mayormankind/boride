@@ -317,7 +317,7 @@ export default function DriverDashboard() {
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <Avatar className="w-12 h-12">
                   <AvatarFallback className="bg-student-primary text-white">
-                    {currentRequest.fullName?.[0] || 'S'}
+                    {currentRequest.student.fullName?.[0] || 'S'}
                   </AvatarFallback>
                 </Avatar>
                 <div>
