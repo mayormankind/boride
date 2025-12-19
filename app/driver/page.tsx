@@ -321,8 +321,8 @@ export default function DriverDashboard() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-semibold">{currentRequest.fullName || 'Student'}</p>
-                  <p className="text-sm text-gray-500">{currentRequest.phoneNo || 'No phone'}</p>
+                  <p className="font-semibold">{currentRequest.student.fullName || 'Student'}</p>
+                  <p className="text-sm text-gray-500">{currentRequest.student.phoneNo || 'No phone'}</p>
                 </div>
               </div>
 
