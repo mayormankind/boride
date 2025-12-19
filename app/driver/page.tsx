@@ -317,12 +317,12 @@ export default function DriverDashboard() {
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <Avatar className="w-12 h-12">
                   <AvatarFallback className="bg-student-primary text-white">
-                    {currentRequest.studentName?.[0] || 'S'}
+                    {currentRequest.fullName?.[0] || 'S'}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-semibold">{currentRequest.studentName || 'Student'}</p>
-                  <p className="text-sm text-gray-500">{currentRequest.studentPhone || 'No phone'}</p>
+                  <p className="font-semibold">{currentRequest.fullName || 'Student'}</p>
+                  <p className="text-sm text-gray-500">{currentRequest.phoneNo || 'No phone'}</p>
                 </div>
               </div>
 
