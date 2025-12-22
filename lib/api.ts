@@ -19,9 +19,6 @@ export class ApiError extends Error {
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true, 
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 
@@ -58,11 +55,9 @@ function handleError(error: unknown) {
 
 // Base API methods
 export const api = {
-  async get<T>(endpoint: string, token?: string): Promise<ApiResponse<T>> {
+  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
     try {
-      const response = await axiosInstance.get<T>(endpoint, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const response = await axiosInstance.get<T>(endpoint);
       return handleResponse<T>(response);
     } catch (error) {
       handleError(error);
@@ -76,9 +71,7 @@ export const api = {
     token?: string
   ): Promise<ApiResponse<T>> {
     try {
-      const response = await axiosInstance.post<T>(endpoint, data, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const response = await axiosInstance.post<T>(endpoint, data);
       return handleResponse<T>(response);
     } catch (error) {
       handleError(error);
@@ -92,9 +85,7 @@ export const api = {
     token?: string
   ): Promise<ApiResponse<T>> {
     try {
-      const response = await axiosInstance.put<T>(endpoint, data, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const response = await axiosInstance.put<T>(endpoint, data);
       return handleResponse<T>(response);
     } catch (error) {
       handleError(error);
@@ -102,11 +93,9 @@ export const api = {
     }
   },
 
-  async delete<T>(endpoint: string, token?: string): Promise<ApiResponse<T>> {
+  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
     try {
-      const response = await axiosInstance.delete<T>(endpoint, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const response = await axiosInstance.delete<T>(endpoint);
       return handleResponse<T>(response);
     } catch (error) {
       handleError(error);
@@ -122,57 +111,56 @@ export const authApi = {
   studentLogin: (data: any) => api.post('/student/login', data),
   studentVerifyEmail: (data: { email: string; otp: string }) => api.post('/student/verify-email', data),
   studentResendOtp: (data: { email: string }) => api.post('/student/resend-otp', data),
-  studentUpdateProfile: (data: any, token: string) => api.put('/student/profile', data, token),
+  studentUpdateProfile: (data: any) => api.put('/student/profile', data),
 
   // Driver
   driverRegister: (data: any) => api.post('/driver/register', data),
   driverLogin: (data: any) => api.post('/driver/login', data),
   driverVerifyEmail: (data: { email: string; otp: string }) => api.post('/driver/verify-email', data),
   driverResendOtp: (data: { email: string }) => api.post('/driver/resend-otp', data),
-  driverUpdateProfile: (data: any, token: string) => api.put('/driver/profile', data, token),
-  driverToggleAvailability: (token: string) => api.put('/driver/availability', {}, token),
+  driverUpdateProfile: (data: any) => api.put('/driver/profile', data),
+  driverToggleAvailability: () => api.put('/driver/availability', {}),
 };
 
 // ==================== RIDE API ====================
 export const rideApi = {
   // Student
-  bookRide: (data: any, token: string) => api.post('/student/rides', data, token),
-  getStudentRides: (token: string, status?: string) => 
+  bookRide: (data: any) => api.post('/student/rides', data),
+  getStudentRides: (status?: string) => 
     api.get<StudentRidesResponse>(
       `/student/rides${status ? `?status=${status}` : ''}`,
-      token
     ),
-  getRideDetails: (rideId: string, token: string, userType: 'student' | 'driver') => 
-    api.get<any>(`/${userType}/rides/${rideId}`, token),
-  cancelRide: (rideId: string, reason: string, token: string, userType: 'student' | 'driver') => 
-    api.put(`/${userType}/rides/${rideId}/cancel`, { reason }, token),
-  rateRide: (rideId: string, data: { rating: number; review?: string }, token: string) => 
-    api.put(`/student/rides/${rideId}/rate`, data, token),
+  getRideDetails: (rideId: string, userType: 'student' | 'driver') => 
+    api.get<any>(`/${userType}/rides/${rideId}`),
+  cancelRide: (rideId: string, reason: string, userType: 'student' | 'driver') => 
+    api.put(`/${userType}/rides/${rideId}/cancel`, { reason }),
+  rateRide: (rideId: string, data: { rating: number; review?: string }) => 
+    api.put(`/student/rides/${rideId}/rate`, data),
 
   // Driver
-  getAvailableRides: (token: string) => api.get<any[]>('/driver/rides/available', token),
-  getDriverRides: (token: string, status?: string) => 
-    api.get<any[]>(`/driver/rides${status ? `?status=${status}` : ''}`, token),
-  acceptRide: (rideId: string, data: { estimatedArrival: number }, token: string) => 
-    api.put(`/driver/rides/${rideId}/accept`, data, token),
-  startRide: (rideId: string, token: string) => 
-    api.put(`/driver/rides/${rideId}/start`, {}, token),
-  completeRide: (rideId: string, data: { actualDistance: number; actualDuration: number }, token: string) => 
-    api.put(`/driver/rides/${rideId}/complete`, data, token),
+  getAvailableRides: () => api.get<any[]>('/driver/rides/available'),
+  getDriverRides: (status?: string) => 
+    api.get<any[]>(`/driver/rides${status ? `?status=${status}` : ''}`),
+  acceptRide: (rideId: string, data: { estimatedArrival: number }) => 
+    api.put(`/driver/rides/${rideId}/accept`, data),
+  startRide: (rideId: string) => 
+    api.put(`/driver/rides/${rideId}/start`, {}),
+  completeRide: (rideId: string, data: { actualDistance: number; actualDuration: number }) => 
+    api.put(`/driver/rides/${rideId}/complete`, data),
 };
 
 // ==================== WALLET API ====================
 export const walletApi = {
-  getWalletBalance: (token: string, userType: 'student' | 'driver') => 
-    api.get<WalletData>(`/${userType}/wallet`, token),
+  getWalletBalance: (userType: 'student' | 'driver') => 
+    api.get<WalletData>(`/${userType}/wallet`),
     
-  getTransactionHistory: (token: string, userType: 'student' | 'driver', limit = 20, page = 1) => 
-    api.get<WalletTransactionsData>(`/${userType}/wallet/transactions?limit=${limit}&page=${page}`, token),
+  getTransactionHistory: (userType: 'student' | 'driver', limit = 20, page = 1) => 
+    api.get<WalletTransactionsData>(`/${userType}/wallet/transactions?limit=${limit}&page=${page}`),
     
-  fundWallet: (data: { amount: number; paymentReference: string }, token: string) => 
-    api.post<WalletData>('/student/wallet/fund', data, token),
+  fundWallet: (data: { amount: number; paymentReference: string }) => 
+    api.post<WalletData>('/student/wallet/fund', data),
     
-  withdrawFromWallet: (data: { amount: number; bankDetails: any }, token: string) => 
-    api.post<WalletData>('/driver/wallet/withdraw', data, token),
+  withdrawFromWallet: (data: { amount: number; bankDetails: any }) => 
+    api.post<WalletData>('/driver/wallet/withdraw', data),
 };
 
