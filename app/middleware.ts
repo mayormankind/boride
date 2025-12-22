@@ -1,33 +1,32 @@
-//middleware.ts
+// middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import jwt from 'jsonwebtoken';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
-  // Get auth token and user role from cookies or headers
-  // This is a placeholder - implement based on your auth system
-  const token = request.cookies.get('auth-token')?.value;
-  const userRole = request.cookies.get('user-role')?.value; // 'student' or 'driver'
 
-  // Protected student routes
-  if (pathname.startsWith('/student')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
-    }
-    if (userRole !== 'student') {
-      return NextResponse.redirect(new URL('/driver', request.url));
-    }
+  const token = request.cookies.get('access_token')?.value;
+
+  if (!token) {
+    return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
-  // Protected driver routes
-  if (pathname.startsWith('/driver')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
-    }
-    if (userRole !== 'driver') {
-      return NextResponse.redirect(new URL('/student', request.url));
-    }
+  let decoded: any;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET!);
+  } catch {
+    return NextResponse.redirect(new URL('/auth/login', request.url));
+  }
+
+  const role = decoded.role;
+
+  if (pathname.startsWith('/student') && role !== 'student') {
+    return NextResponse.redirect(new URL('/driver', request.url));
+  }
+
+  if (pathname.startsWith('/driver') && role !== 'driver') {
+    return NextResponse.redirect(new URL('/student', request.url));
   }
 
   return NextResponse.next();

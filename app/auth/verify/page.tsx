@@ -17,8 +17,9 @@ function VerifyForm() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const email = searchParams.get('email');
-  const role = searchParams.get('role');
+  const stored = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("pendingVerification") || "{}") : {};
+  const email = searchParams.get('email') || stored.email || "";
+  const role = searchParams.get('role') || stored.role || "";
 
   const [resending, setResending] = useState(false);
 

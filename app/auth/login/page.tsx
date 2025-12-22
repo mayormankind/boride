@@ -127,19 +127,23 @@ export default function LoginPage() {
          toast.error(res?.message || "Login failed");
       }
     } catch (err: any) {
-      if (
-        err.message.toLowerCase().includes("not verified")
-      ) {
-        router.push(
-          `/auth/verify?email=${encodeURIComponent(data.identifier)}`
+      if (err.message.toLowerCase().includes("not verified")) {
+        localStorage.setItem(
+          "pendingVerification",
+          JSON.stringify({
+            email: data.identifier,
+            role: detectedRole,
+          })
         );
+      
+        router.push("/auth/verify");
         toast.info("Please verify your email to continue");
         return;
       }
+      
       console.log(err);
       toast.error(err.message || "Login failed");
-    }    
-    
+    }     
     setIsSubmitting(false);
   };
   
