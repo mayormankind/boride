@@ -29,7 +29,6 @@ import { toast } from 'sonner';
 import { mapBackendRideToStoreRide } from '@/lib/mapper';
 
 export default function StudentRidesPage() {
-  const token = useAuthStore((state) => state.token);
 
   const activeRide = useRideStore((state) => state.activeRide);
   const rideHistory = useRideStore((state) => state.rideHistory);
@@ -49,9 +48,9 @@ export default function StudentRidesPage() {
   };
 
   const handleRateSubmit = async (rating: number, review?: string) => {
-      if (!selectedRideId || !token) return;
+      if (!selectedRideId) return;
       try {
-          const res = await rideApi.rateRide(selectedRideId, { rating, review }, token);
+          const res = await rideApi.rateRide(selectedRideId, { rating, review });
           if (res.success) {
               toast.success("Rating submitted!");
               // Update local history to show it's rated
@@ -67,9 +66,8 @@ export default function StudentRidesPage() {
   };
 
   useEffect(() => {
-    if (!token) return;
   
-    rideApi.getStudentRides(token).then((res) => {
+    rideApi.getStudentRides().then((res) => {
       if (!res.success) return;
   
       setLocalHistory(res.rides.map(mapBackendRideToStoreRide));
@@ -82,7 +80,7 @@ export default function StudentRidesPage() {
         setActiveRide(mapBackendRideToStoreRide(current));
       }
     });
-  }, [token, activeRide, setActiveRide]);
+  }, [activeRide, setActiveRide]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-student-bg via-white to-gray-50 pb-20">

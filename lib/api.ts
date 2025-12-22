@@ -68,7 +68,6 @@ export const api = {
   async post<T>(
     endpoint: string,
     data: any,
-    token?: string
   ): Promise<ApiResponse<T>> {
     try {
       const response = await axiosInstance.post<T>(endpoint, data);
@@ -82,7 +81,6 @@ export const api = {
   async put<T>(
     endpoint: string,
     data: any,
-    token?: string
   ): Promise<ApiResponse<T>> {
     try {
       const response = await axiosInstance.put<T>(endpoint, data);

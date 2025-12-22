@@ -13,7 +13,6 @@ import { useRouter } from 'next/navigation';
 
 export default function DriverProfilePage() {
   const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
   const updateUser = useAuthStore((state) => state.updateUser);
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
@@ -25,9 +24,8 @@ export default function DriverProfilePage() {
   });
 
   const handleSave = async () => {
-    if(!token) return;
     try {
-        await authApi.driverUpdateProfile(formData, token);
+        await authApi.driverUpdateProfile(formData);
         updateUser(formData);
         setIsEditing(false);
     } catch (e) {

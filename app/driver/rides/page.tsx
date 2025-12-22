@@ -26,7 +26,6 @@ const STATUS_CONFIG = {
 };
 
 export default function DriverRidesPage() {
-  const token = useAuthStore((state) => state.token);
   const activeRide = useRideStore((state) => state.activeRide);
   const rideHistory = useRideStore((state) => state.rideHistory);
   const setActiveRide = useRideStore((state) => state.setActiveRide);
@@ -40,8 +39,7 @@ export default function DriverRidesPage() {
   const [localHistory, setLocalHistory] = useState<any[]>([]);
 
   useEffect(() => {
-    if(token) {
-        rideApi.getDriverRides(token).then(res => {
+    rideApi.getDriverRides().then(res => {
             if(res.success) {
                 setLocalHistory(res.rides.map(mapBackendRideToStoreRide));
 
@@ -51,15 +49,14 @@ export default function DriverRidesPage() {
                 }
             }
         });
-    }
-  }, [token]);
+  }, []);
 
   const [activeTab, setActiveTab] = useState('active');
 
   const handleStartTrip = async () => {
-    if (activeRide && token) {
+    if (activeRide) {
       try {
-          const res = await rideApi.startRide(activeRide.id, token);
+          const res = await rideApi.startRide(activeRide.id);
           if (res.success) {
             updateRideStatus(activeRide.id, 'in-trip');
             toast.success("Ride started");
@@ -73,10 +70,10 @@ export default function DriverRidesPage() {
   };
 
   const handleEndTrip = async () => {
-    if (activeRide && token) {
+    if (activeRide) {
       try {
           // Mocking distance/duration for now as we don't have GPS tracking implemented here
-          const res = await rideApi.completeRide(activeRide.id, { actualDistance: 5, actualDuration: 15 }, token);
+          const res = await rideApi.completeRide(activeRide.id, { actualDistance: 5, actualDuration: 15 });
           if (res.success) {
                // Update stats locally or re-fetch?
                // Let's rely on the store update that we do manually for immediate feedback

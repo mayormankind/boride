@@ -1,28 +1,29 @@
-//lib/stores/authStore.ts
+// lib/stores/authStore.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface User {
+export interface User {
   id: string;
   fullName: string;
   email: string;
   phone: string;
   role: 'student' | 'driver';
   avatar?: string;
-  matricNo?: string; // for students
+  matricNo?: string;
   vehicleInfo?: {
     make: string;
     model: string;
     plateNumber: string;
     color: string;
-  }; // for drivers
+  };
 }
 
 interface AuthState {
   user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  login: (user: User, token: string) => void;
+  loading: boolean;
+
+  // Actions
+  setUser: (user: User | null) => void;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
 }
@@ -31,25 +32,30 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      token: null,
-      isAuthenticated: false,
-      login: (user) =>
+      loading: true,
+
+      setUser: (user) =>
         set({
           user,
-          isAuthenticated: true
+          loading: false,
         }),
+
       logout: () =>
         set({
           user: null,
-          isAuthenticated: false,
+          loading: false,
         }),
+
       updateUser: (userData) =>
         set((state) => ({
           user: state.user ? { ...state.user, ...userData } : null,
         })),
     }),
     {
-      name: 'boride-auth-storage',
+      name: 'boride-auth',
+      partialize: (state) => ({
+        user: state.user, // persist user only
+      }),
     }
   )
 );

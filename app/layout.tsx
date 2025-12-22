@@ -3,6 +3,7 @@ import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ReactQueryProvider } from "@/lib/providers/ReactQueryProvider";
 import { Toaster } from "sonner"
+import AuthProvider from "@/lib/providers/AuthProvider";
 
 // Primary font - Inter
 const inter = Inter({
@@ -88,7 +89,9 @@ export default function RootLayout({
         }}
       >
         <Toaster position="top-right" richColors/>
-        <ReactQueryProvider>{children}</ReactQueryProvider>
+        <AuthProvider>
+          <ReactQueryProvider>{children}</ReactQueryProvider>
+        </AuthProvider>
       </body>
     </html>
   );

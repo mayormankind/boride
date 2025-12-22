@@ -26,7 +26,6 @@ const ESTIMATED_FARE = 500;
 
 export default function StudentDashboard() {
   const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
 
   const [rides, setRides] = useState<BackendRide[]>([]);
   const [pickup, setPickup] = useState('');
@@ -40,14 +39,12 @@ export default function StudentDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    if (token) {
       fetchRecentRides();
-    }
-  }, [token]);
+  }, []);
 
   const fetchRecentRides = async () => {
     try {
-      const res = await rideApi.getStudentRides(token!);
+      const res = await rideApi.getStudentRides();
   
       if (!res.success) {
         throw new Error(res.message || 'Failed to fetch rides');
@@ -63,11 +60,11 @@ export default function StudentDashboard() {
 
   // Step 1: Fetch wallet balance and open payment modal
   const handleRequestRide = async () => {
-    if (!pickup || !destination || !token) return;
+    if (!pickup || !destination) return;
 
     setIsLoading(true);
     try {
-      const walletRes = await walletApi.getWalletBalance(token, 'student');
+      const walletRes = await walletApi.getWalletBalance('student');
       if (!walletRes.success) {
         throw new Error('Failed to fetch wallet balance');
       }
@@ -85,7 +82,7 @@ export default function StudentDashboard() {
 
   // Step 2: Confirm and book ride
   const handleConfirmPayment = async (method: 'Cash' | 'Wallet') => {
-    if (!pickup || !destination || !token) return;
+    if (!pickup || !destination) return;
 
     setIsLoading(true);
     try {
@@ -104,7 +101,7 @@ export default function StudentDashboard() {
         estimatedDuration: 15,
       };
 
-      const res = await rideApi.bookRide(payload, token);
+      const res = await rideApi.bookRide(payload);
 
       if (res.success) {
         toast.success("Ride requested successfully!");

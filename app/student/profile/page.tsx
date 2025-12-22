@@ -14,7 +14,6 @@ import Link from 'next/link';
 
 export default function StudentProfilePage() {
   const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
   const updateUser = useAuthStore((state) => state.updateUser);
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
@@ -26,9 +25,8 @@ export default function StudentProfilePage() {
   });
 
   const handleSave = async () => {
-    if(!token) return;
     try {
-        await authApi.studentUpdateProfile(formData, token);
+        await authApi.studentUpdateProfile(formData);
         updateUser(formData);
         setIsEditing(false);
     } catch (e) {

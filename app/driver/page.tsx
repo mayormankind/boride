@@ -22,7 +22,6 @@ import { toast } from 'sonner';
 
 export default function DriverDashboard() {
   const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
   const { isOnline, setOnlineStatus, stats, updateStats } = useDriverStore();
   const { activeRide, setActiveRide, clearActiveRide } = useRideStore();
 
@@ -37,9 +36,9 @@ export default function DriverDashboard() {
     let interval: NodeJS.Timeout;
 
     const fetchAvailableRides = async () => {
-      if (isOnline && !activeRide && token) {
+      if (isOnline && !activeRide) {
         try {
-          const res = await rideApi.getAvailableRides(token);
+          const res = await rideApi.getAvailableRides();
           if (res.success && res.count > 0) {
             setAvailableRides(res.rides);
             // Auto-prompt the first one if no dialog is open
@@ -55,12 +54,10 @@ export default function DriverDashboard() {
     };
 
     const fetchWallet = async () => {
-        if(token) {
-            try {
-                const res = await walletApi.getWalletBalance(token, 'driver');
-                if(res.success) setWalletBalance(res.balance);
-            } catch(e) {}
-        }
+      try {
+        const res = await walletApi.getWalletBalance('driver');
+        if(res.success) setWalletBalance(res.balance);
+      } catch(e) {}
     }
 
     if (isOnline) {
@@ -70,13 +67,12 @@ export default function DriverDashboard() {
     }
 
     return () => clearInterval(interval);
-  }, [isOnline, activeRide, token, showRequestDialog, currentRequest]);
+  }, [isOnline, activeRide, showRequestDialog, currentRequest]);
 
   const handleToggleOnline = async () => {
-    if (!token) return;
     setIsLoading(true);
     try {
-        const res = await authApi.driverToggleAvailability(token);
+        const res = await authApi.driverToggleAvailability();
         if (res.success) {
             const newStatus = !isOnline;
             setOnlineStatus(newStatus);
@@ -90,11 +86,11 @@ export default function DriverDashboard() {
   };
 
   const handleAcceptRide = async () => {
-    if (!currentRequest || !token) return;
+    if (!currentRequest) return;
     setIsLoading(true);
     try {
         // Mock estimated arrival for now (5 mins)
-        const res = await rideApi.acceptRide(currentRequest._id || currentRequest.id, { estimatedArrival: 5 }, token);
+        const res = await rideApi.acceptRide(currentRequest._id || currentRequest.id, { estimatedArrival: 5 });
         if (res.success) {
             toast.success("Ride accepted!");
             setActiveRide(res.ride); // Update store with accepted ride
@@ -118,9 +114,9 @@ export default function DriverDashboard() {
   };
 
   const handleStartRide = async () => {
-      if(!activeRide || !token) return;
+      if(!activeRide) return;
       try {
-          const res = await rideApi.startRide(activeRide.id || (activeRide as any)._id, token);
+          const res = await rideApi.startRide(activeRide.id || (activeRide as any)._id);
           if(res.success) {
               toast.success("Ride started");
               setActiveRide(res.ride);
@@ -131,15 +127,15 @@ export default function DriverDashboard() {
   };
 
   const handleCompleteRide = async () => {
-    if(!activeRide || !token) return;
+    if(!activeRide) return;
     try {
         // Mock distance/duration
-        const res = await rideApi.completeRide(activeRide.id || (activeRide as any)._id, { actualDistance: 3, actualDuration: 20 }, token);
+        const res = await rideApi.completeRide(activeRide.id || (activeRide as any)._id, { actualDistance: 3, actualDuration: 20 });
         if(res.success) {
             toast.success("Ride completed. Payment credited.");
             clearActiveRide();
             // Refresh wallet
-            const bRes = await walletApi.getWalletBalance(token, 'driver');
+            const bRes = await walletApi.getWalletBalance('driver');
             if(bRes.success) setWalletBalance(bRes.balance);
         }
     } catch (error: any) {

@@ -12,7 +12,6 @@ import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import { toast } from 'sonner';
 
 export default function StudentWalletPage() {
-  const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
 
   const [balance, setBalance] = useState(0);
@@ -25,19 +24,17 @@ export default function StudentWalletPage() {
   const [isFunding, setIsFunding] = useState(false);
 
   useEffect(() => {
-    if (token) {
-      fetchWalletData();
-    }
-  }, [token]);
+    fetchWalletData();
+  }, []);
 
   const fetchWalletData = async () => {
     try {
-      const balanceRes = await walletApi.getWalletBalance(token!, 'student');
+      const balanceRes = await walletApi.getWalletBalance('student');
       if (balanceRes.success) {
         setBalance(balanceRes.balance);
       }
 
-      const historyRes = await walletApi.getTransactionHistory(token!, 'student');
+      const historyRes = await walletApi.getTransactionHistory('student');
       if (historyRes.success) {
         setTransactions(historyRes.transactions);
       }
@@ -61,7 +58,7 @@ export default function StudentWalletPage() {
       const res = await walletApi.fundWallet({
           amount: fundAmount,
           paymentReference: reference
-      }, token!);
+      });
 
       if (res.success) {
         toast.success(`Successfully funded ₦${fundAmount}`);

@@ -118,7 +118,8 @@ export default function LoginPage() {
             avatar: rawUser.profileImage || rawUser.avatar, 
         };
 
-        useAuthStore.getState().login(user, res.token);
+        useAuthStore.getState().setUser(user);
+
         
         toast.success("Logged in successfully");
         router.push(role === 'student' ? '/student' : '/driver');

@@ -12,7 +12,6 @@ import DriverBottomNav from '@/components/shared/DriverBottomNav';
 import { toast } from 'sonner';
 
 export default function DriverWalletPage() {
-  const token = useAuthStore((state) => state.token);
   
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -29,19 +28,17 @@ export default function DriverWalletPage() {
   });
 
   useEffect(() => {
-    if (token) {
-      fetchWalletData();
-    }
-  }, [token]);
+    fetchWalletData();
+  }, []);
 
   const fetchWalletData = async () => {
     try {
-      const balanceRes = await walletApi.getWalletBalance(token!, 'driver');
+      const balanceRes = await walletApi.getWalletBalance('driver');
       if (balanceRes.success && balanceRes.data) {
         setBalance(balanceRes.data.balance);
       }
 
-      const historyRes = await walletApi.getTransactionHistory(token!, 'driver');
+      const historyRes = await walletApi.getTransactionHistory('driver');
       if (historyRes.success && historyRes.data) {
         setTransactions(historyRes.data.transactions);
       }
@@ -67,7 +64,7 @@ export default function DriverWalletPage() {
       const res = await walletApi.withdrawFromWallet({
           amount: withdrawAmount,
           bankDetails // This is just passed to backend for record
-      }, token!);
+      });
 
       if (res.success) {
         toast.success(`Withdrawal of ₦${withdrawAmount} successful`);
