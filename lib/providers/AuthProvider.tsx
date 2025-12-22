@@ -8,7 +8,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const setUser = useAuthStore((s) => s.setUser);
 
   useEffect(() => {
-    fetch('/api/auth/me', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
       credentials: 'include',
     })
       .then((res) => (res.ok ? res.json() : null))
