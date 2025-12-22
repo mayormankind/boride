@@ -123,13 +123,23 @@ export default function LoginPage() {
         toast.success("Logged in successfully");
         router.push(role === 'student' ? '/student' : '/driver');
       } else {
+        console.log(res)
          toast.error(res?.message || "Login failed");
       }
     } catch (err: any) {
+      if (
+        err.message.toLowerCase().includes("not verified")
+      ) {
+        router.push(
+          `/auth/verify?email=${encodeURIComponent(data.identifier)}`
+        );
+        toast.info("Please verify your email to continue");
+        return;
+      }
       console.log(err);
-      toast.error(err.response?.data?.message || "Login failed");
-    }
-  
+      toast.error(err.message || "Login failed");
+    }    
+    
     setIsSubmitting(false);
   };
   

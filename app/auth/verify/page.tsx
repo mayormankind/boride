@@ -36,9 +36,9 @@ function VerifyForm() {
     }
 
     // Auto-submit when all filled
-    // if (newOtp.every(digit => digit !== '')) {
-    //   document.getElementById('verify-button')?.click();
-    // }
+    if (newOtp.every(digit => digit !== '')) {
+      document.getElementById('verify-button')?.click();
+    }
   };
 
   // Handle backspace to go to previous input

@@ -1,3 +1,4 @@
+//lib/api.ts
 import axios, { AxiosResponse } from 'axios';
 import type { ApiResponse, StudentRidesResponse, WalletData, WalletTransactionsData } from './types';
 
@@ -17,10 +18,12 @@ export class ApiError extends Error {
 // Create axios instance
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true, 
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
 
 // Helper to handle axios responses
 function handleResponse<T>(response: AxiosResponse<T>): ApiResponse<T> {
