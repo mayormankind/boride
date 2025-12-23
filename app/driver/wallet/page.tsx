@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Wallet, ArrowUpRight, ArrowDownLeft, History, Building, Loader2 } from 'lucide-react';
-import DriverBottomNav from '@/components/shared/DriverBottomNav';
 import { toast } from 'sonner';
 
 export default function DriverWalletPage() {
@@ -199,8 +198,6 @@ export default function DriverWalletPage() {
             </div>
         </DialogContent>
       </Dialog>
-
-      <DriverBottomNav />
     </div>
   );
 }

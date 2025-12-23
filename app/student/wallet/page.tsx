@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Wallet, ArrowUpRight, ArrowDownLeft, History, CreditCard, Loader2 } from 'lucide-react';
-import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import { toast } from 'sonner';
 
 export default function StudentWalletPage() {
@@ -187,8 +186,6 @@ export default function StudentWalletPage() {
             </div>
         </DialogContent>
       </Dialog>
-
-      <StudentBottomNav />
     </div>
   );
 }

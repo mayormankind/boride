@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { authApi } from '@/lib/api';
-import DriverBottomNav from '@/components/shared/DriverBottomNav';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function DriverProfilePage() {
   const user = useAuthStore((state) => state.user);
@@ -20,16 +20,18 @@ export default function DriverProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     fullName: user?.fullName || '',
-    phone: user?.phone || '',
+    phoneNo: user?.phoneNo || '',
   });
 
   const handleSave = async () => {
     try {
         await authApi.driverUpdateProfile(formData);
         updateUser(formData);
+        toast.success('Profile updated successfully');
         setIsEditing(false);
-    } catch (e) {
+    } catch (e:any) {
         console.error(e);
+        toast.error(e)
     }
   };
 
@@ -41,18 +43,18 @@ export default function DriverProfilePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-rider-bg via-white to-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-rider-primary to-rider-dark p-6 text-white">
+      <div className="bg-gradient-to-r from-rider-primary to-rider-dark py-8 px-6 text-white">
         <h1 className="text-2xl font-bold font-jakarta">My Profile</h1>
         <p className="text-blue-100 text-sm mt-1">Manage your account and vehicle information</p>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-16">
+      <div className="max-w-4xl mx-auto px-4 -mt-6">
         {/* Profile Picture Card */}
         <Card className="shadow-lg border-0 bg-white mb-6">
           <CardContent className="p-6 text-center">
             <div className="relative inline-block mb-4">
               <Avatar className="w-28 h-28 border-4 border-white shadow-lg">
-                <AvatarImage src={user?.avatar} alt={user?.fullName} />
+                <AvatarImage src={user?.profileImage} alt={user?.fullName} />
                 <AvatarFallback className="bg-gradient-to-br from-rider-primary to-rider-dark text-white text-3xl font-bold">
                   {user?.fullName?.charAt(0) || 'D'}
                 </AvatarFallback>
@@ -117,12 +119,12 @@ export default function DriverProfilePage() {
               </label>
               {isEditing ? (
                 <Input
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  value={formData.phoneNo}
+                  onChange={(e) => setFormData({ ...formData, phoneNo: e.target.value })}
                   className="mt-1"
                 />
               ) : (
-                <p className="text-gray-800 font-medium mt-1">{user?.phone}</p>
+                <p className="text-gray-800 font-medium mt-1">{user?.phoneNo}</p>
               )}
             </div>
 
@@ -255,8 +257,6 @@ export default function DriverProfilePage() {
           </CardContent>
         </Card>
       </div>
-
-      <DriverBottomNav />
     </div>
   );
 }

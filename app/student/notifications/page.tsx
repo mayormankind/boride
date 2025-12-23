@@ -6,7 +6,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import StudentBottomNav from '@/components/shared/StudentBottomNav';
 
 interface Notification {
   id: string;
@@ -37,46 +36,46 @@ const NOTIFICATION_COLORS = {
 
 // Mock data
 const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    type: 'ride_accepted',
-    title: 'Ride Accepted!',
-    message: 'John Doe has accepted your ride request. He will be there in 5 minutes.',
-    timestamp: new Date(Date.now() - 5 * 60 * 1000),
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'driver_arrived',
-    title: 'Driver Arrived',
-    message: 'Your driver has arrived at the pickup location.',
-    timestamp: new Date(Date.now() - 15 * 60 * 1000),
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'trip_completed',
-    title: 'Trip Completed',
-    message: 'Your ride to Main Library has been completed. Total fare: ₦1,500',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    read: true,
-  },
-  {
-    id: '4',
-    type: 'promo',
-    title: 'Special Offer! 🎉',
-    message: 'Get 20% off on your next ride. Use code: BORIDE20',
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    read: true,
-  },
-  {
-    id: '5',
-    type: 'system',
-    title: 'App Update Available',
-    message: 'A new version of BoRide is available. Update now for better features!',
-    timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    read: true,
-  },
+  // {
+  //   id: '1',
+  //   type: 'ride_accepted',
+  //   title: 'Ride Accepted!',
+  //   message: 'John Doe has accepted your ride request. He will be there in 5 minutes.',
+  //   timestamp: new Date(Date.now() - 5 * 60 * 1000),
+  //   read: false,
+  // },
+  // {
+  //   id: '2',
+  //   type: 'driver_arrived',
+  //   title: 'Driver Arrived',
+  //   message: 'Your driver has arrived at the pickup location.',
+  //   timestamp: new Date(Date.now() - 15 * 60 * 1000),
+  //   read: false,
+  // },
+  // {
+  //   id: '3',
+  //   type: 'trip_completed',
+  //   title: 'Trip Completed',
+  //   message: 'Your ride to Main Library has been completed. Total fare: ₦1,500',
+  //   timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+  //   read: true,
+  // },
+  // {
+  //   id: '4',
+  //   type: 'promo',
+  //   title: 'Special Offer! 🎉',
+  //   message: 'Get 20% off on your next ride. Use code: BORIDE20',
+  //   timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
+  //   read: true,
+  // },
+  // {
+  //   id: '5',
+  //   type: 'system',
+  //   title: 'App Update Available',
+  //   message: 'A new version of BoRide is available. Update now for better features!',
+  //   timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+  //   read: true,
+  // },
 ];
 
 export default function StudentNotificationsPage() {
@@ -181,14 +180,13 @@ export default function StudentNotificationsPage() {
               <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-700 mb-2">No Notifications</h3>
               <p className="text-gray-500 text-sm">
-                You're all caught up! New notifications will appear here.
+                {/* You're all caught up! New notifications will appear here. */}
+                New notifications will appear here.
               </p>
             </CardContent>
           </Card>
         )}
       </div>
-
-      <StudentBottomNav />
     </div>
   );
 }

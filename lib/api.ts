@@ -118,6 +118,9 @@ export const authApi = {
   driverResendOtp: (data: { email: string }) => api.post('/driver/resend-otp', data),
   driverUpdateProfile: (data: any) => api.put('/driver/profile', data),
   driverToggleAvailability: () => api.put('/driver/availability', {}),
+
+  //shared
+  getMe: () => api.get('/auth/me')
 };
 
 // ==================== RIDE API ====================

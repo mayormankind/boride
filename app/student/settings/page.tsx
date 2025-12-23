@@ -5,7 +5,6 @@ import { Bell, Moon, FileText, Trash2, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import StudentBottomNav from '@/components/shared/StudentBottomNav';
 
 export default function StudentSettingsPage() {
   const [settings, setSettings] = useState({
@@ -169,8 +168,6 @@ export default function StudentSettingsPage() {
           <p className="mt-1">Version 1.0.0</p>
         </div>
       </div>
-
-      <StudentBottomNav />
     </div>
   );
 }

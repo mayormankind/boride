@@ -14,9 +14,9 @@ interface DriverStats {
 }
 
 interface DriverState {
-  isOnline: boolean;
+  isAvailable: boolean;
   stats: DriverStats;
-  setOnlineStatus: (status: boolean) => void;
+  setAvailability: (status: boolean) => void;
   updateStats: (stats: Partial<DriverStats>) => void;
   resetDailyStats: () => void;
 }
@@ -36,9 +36,9 @@ const defaultStats: DriverStats = {
 export const useDriverStore = create<DriverState>()(
   persist(
     (set) => ({
-      isOnline: false,
+      isAvailable: false,
       stats: defaultStats,
-      setOnlineStatus: (status) => set({ isOnline: status }),
+      setAvailability: (status) => set({ isAvailable: status }),
       updateStats: (newStats) =>
         set((state) => ({
           stats: { ...state.stats, ...newStats },

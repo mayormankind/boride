@@ -111,11 +111,11 @@ export default function LoginPage() {
             id: rawUser.id || rawUser._id,
             fullName: rawUser.fullName,
             email: rawUser.email,
-            phone: rawUser.phoneNo || rawUser.phone || '',
+            phoneNo: rawUser.phoneNo,
             role: role as 'student' | 'driver',
             matricNo: rawUser.matricNo,
             vehicleInfo: rawUser.vehicleInfo,
-            avatar: rawUser.profileImage || rawUser.avatar, 
+            profileImage: rawUser.profileImage, 
         };
 
         useAuthStore.getState().setUser(user);

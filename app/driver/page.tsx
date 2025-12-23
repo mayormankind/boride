@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Power, User as UserIcon, Bell, MapPin, Navigation, DollarSign, Loader2Icon } from 'lucide-react';
+import { Power, User as UserIcon, Bell, MapPin, Navigation, DollarSign, Loader2Icon, EyeOff, Eye } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -17,13 +17,13 @@ import {
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useDriverStore } from '@/lib/stores/driverStore';
 import { useRideStore, type Ride } from '@/lib/stores/rideStore';
-import DriverBottomNav from '@/components/shared/DriverBottomNav';
 import { authApi, rideApi, walletApi } from '@/lib/api';
 import { toast } from 'sonner';
 
 export default function DriverDashboard() {
   const user = useAuthStore((state) => state.user);
-  const { isOnline, setOnlineStatus, stats, updateStats } = useDriverStore();
+  const { isAvailable, setAvailability, stats } = useDriverStore();
+
   const { activeRide, setActiveRide, clearActiveRide } = useRideStore();
 
   const [availableRides, setAvailableRides] = useState<any[]>([]);
@@ -31,13 +31,25 @@ export default function DriverDashboard() {
   const [currentRequest, setCurrentRequest] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
+  const [ showBalance, setShowBalance ] = useState(false);
 
+  useEffect(() => {
+    const syncAvailability = async () => {
+      const res = await authApi.getMe();
+      if (res.success) {
+        setAvailability(res.driver.isAvailable);
+      }
+    };
+  
+    syncAvailability();
+  }, []);
+  
   // Polling for available rides
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
     const fetchAvailableRides = async () => {
-      if (isOnline && !activeRide) {
+      if (isAvailable && !activeRide) {
         try {
           const res = await rideApi.getAvailableRides();
           if (res.success && res.count > 0) {
@@ -61,30 +73,32 @@ export default function DriverDashboard() {
       } catch(e) {}
     }
 
-    if (isOnline) {
+    if (isAvailable) {
       fetchAvailableRides(); // Initial fetch
       fetchWallet();
       interval = setInterval(fetchAvailableRides, 10000); // Poll every 10s
     }
 
     return () => clearInterval(interval);
-  }, [isOnline, activeRide, showRequestDialog, currentRequest]);
+  }, [isAvailable, activeRide, showRequestDialog, currentRequest]);
 
   const handleToggleOnline = async () => {
     setIsLoading(true);
     try {
-        const res = await authApi.driverToggleAvailability();
-        if (res.success) {
-            const newStatus = !isOnline;
-            setOnlineStatus(newStatus);
-            toast.success(newStatus ? "You are now Online" : "You are now Offline");
-        }
+      const res = await authApi.driverToggleAvailability();
+  
+      if (res.success) {
+        setAvailability(res.isAvailable);
+  
+        toast.success(res.isAvailable ? "You are now Online" : "You are now Offline");
+      }
     } catch (error: any) {
-        toast.error(error.message || "Failed to toggle status");
+      toast.error(error.message || "Failed to toggle status");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
+  
 
   const handleAcceptRide = async () => {
     if (!currentRequest) return;
@@ -144,6 +158,11 @@ export default function DriverDashboard() {
     }
   };
 
+  const toggleBalance = () =>{
+    setShowBalance(!showBalance)
+  }
+
+  console.log(activeRide)
   return (
     <div className="min-h-screen bg-gradient-to-br from-rider-bg via-white to-gray-50 pb-20">
       {/* Header */}
@@ -154,11 +173,11 @@ export default function DriverDashboard() {
               Welcome back, {user?.fullName?.split(' ')[0] || 'Driver'}! 👋
             </h1>
             <p className="text-blue-100 text-sm mt-1">
-              {isOnline ? 'You are online and ready for rides' : 'Go online to start earning'}
+              {isAvailable ? 'You are online and ready for rides' : 'Go online to start earning'}
             </p>
           </div>
           <Avatar className="w-14 h-14 border-2 border-white shadow-md">
-            <AvatarImage src={user?.avatar} alt={user?.fullName} />
+            <AvatarImage src={user?.profileImage} alt={user?.fullName} />
             <AvatarFallback className="bg-white text-rider-primary font-semibold text-lg">
               {user?.fullName?.charAt(0) || 'D'}
             </AvatarFallback>
@@ -170,20 +189,20 @@ export default function DriverDashboard() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'} flex items-center justify-center`}>
+                <div className={`w-12 h-12 rounded-full ${isAvailable ? 'bg-green-500' : 'bg-gray-400'} flex items-center justify-center`}>
                   <Power className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <p className="font-semibold text-white">
-                    {isOnline ? 'You are Online' : 'You are Offline'}
+                    {isAvailable ? 'You are Online' : 'You are Offline'}
                   </p>
                   <p className="text-xs text-blue-100">
-                    {isOnline ? 'Accepting ride requests' : 'Not accepting requests'}
+                    {isAvailable ? 'Accepting ride requests' : 'Not accepting requests'}
                   </p>
                 </div>
               </div>
               <Switch
-                checked={isOnline}
+                checked={isAvailable}
                 onCheckedChange={handleToggleOnline}
                 disabled={isLoading}
                 className="data-[state=checked]:bg-green-500"
@@ -195,22 +214,20 @@ export default function DriverDashboard() {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Wallet & Stats Summary */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <Card className="shadow-md">
+        {/* <div className="grid grid-cols-2 gap-4 mb-6"> */}
+          <Card className="shadow-md mb-5 elative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-500 text-white">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                </div>
-                <p className="text-sm text-gray-600">Wallet Balance</p>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <p className="text-sm text-gray-600">Total Balance</p>
+                {showBalance ? <EyeOff className="w-4 h-4 text-gray-600" onClick={()=> toggleBalance()}/> : <Eye className="w-4 h-4 text-gray-600" onClick={()=> toggleBalance()}/> }
               </div>
-              <p className="text-2xl font-bold text-gray-800">
-                ₦{walletBalance.toLocaleString()}
+              <p className="text-2xl text-center font-bold text-gray-800">
+                {showBalance ? `₦${walletBalance.toLocaleString()}` : '********'}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="shadow-md">
+          {/* <Card className="shadow-md">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-10 h-10 rounded-full bg-rider-primary/10 flex items-center justify-center">
@@ -222,22 +239,22 @@ export default function DriverDashboard() {
                 {stats?.rating?.toFixed(1) || '5.0'}⭐
               </p>
             </CardContent>
-          </Card>
-        </div>
+          </Card> */}
+        {/* </div> */}
 
         {/* Active Ride Control or Status */}
         {activeRide ? (
-            <Card className="shadow-lg border-2 border-blue-200 bg-blue-50 mb-6">
-                <CardContent className="p-6">
+            <Card className="bg-blue-50 mb-6">
+                <CardContent>
                     <h3 className="text-lg font-bold mb-4 text-blue-800">Current Ride</h3>
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
                              <span className="text-gray-600">Passenger</span>
-                             <span className="font-semibold">{activeRide.studentName || 'Student'}</span>
+                             <span className="font-semibold">{activeRide.student?.fullName || 'Student'}</span>
                         </div>
                         <div className="flex justify-between items-center">
                              <span className="text-gray-600">Route</span>
-                             <span className="font-semibold text-right">{activeRide.pickupLocation} <br/>to {activeRide.destination}</span>
+                             <span className="font-semibold text-right">{activeRide?.pickupLocation.address} <br/>to {activeRide?.dropoffLocation.address}</span>
                         </div>
                         <div className="flex justify-between items-center">
                              <span className="text-gray-600">Status</span>
@@ -250,7 +267,7 @@ export default function DriverDashboard() {
                                     Start Trip
                                 </Button>
                             )}
-                            {activeRide.status === 'in-trip' && (
+                            {activeRide.status === 'accepted' && (
                                 <Button onClick={handleCompleteRide} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
                                     Complete Trip
                                 </Button>
@@ -262,7 +279,7 @@ export default function DriverDashboard() {
         ) : (
             <>
                 {/* Status Card */}
-                {!isOnline ? (
+                {!isAvailable ? (
                 <Card className="shadow-lg border-2 border-dashed border-gray-300">
                     <CardContent className="p-12 text-center">
                     <div className="w-20 h-20 rounded-full bg-gray-100 mx-auto mb-4 flex items-center justify-center">
@@ -377,8 +394,6 @@ export default function DriverDashboard() {
           )}
         </DialogContent>
       </Dialog>
-
-      <DriverBottomNav />
     </div>
   );
 }

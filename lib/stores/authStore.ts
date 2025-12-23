@@ -6,9 +6,9 @@ export interface User {
   id: string;
   fullName: string;
   email: string;
-  phone: string;
+  phoneNo: string;
   role: 'student' | 'driver';
-  avatar?: string;
+  profileImage?: string;
   matricNo?: string;
   vehicleInfo?: {
     make: string;

@@ -4,7 +4,6 @@ import { DollarSign, TrendingUp, Car, XCircle, Calendar, BarChart3 } from 'lucid
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDriverStore } from '@/lib/stores/driverStore';
-import DriverBottomNav from '@/components/shared/DriverBottomNav';
 
 export default function DriverEarningsPage() {
   const stats = useDriverStore((state) => state.stats);
@@ -249,8 +248,6 @@ export default function DriverEarningsPage() {
           </CardContent>
         </Card>
       </div>
-
-      <DriverBottomNav />
     </div>
   );
 }

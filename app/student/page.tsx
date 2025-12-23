@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/lib/stores/authStore';
-import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import { rideApi, walletApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -140,7 +139,7 @@ export default function StudentDashboard() {
             <p className="text-emerald-100 text-sm mt-1">Where are you headed today?</p>
           </div>
           <Avatar className="w-14 h-14 border-2 border-white shadow-md">
-            <AvatarImage src={user?.avatar} alt={user?.fullName} />
+            <AvatarImage src={user?.profileImage} alt={user?.fullName} />
             <AvatarFallback className="bg-white text-student-primary font-semibold text-lg">
               {user?.fullName?.charAt(0) || 'S'}
             </AvatarFallback>
@@ -278,8 +277,6 @@ export default function StudentDashboard() {
           )}
         </div>
       </div>
-
-      <StudentBottomNav />
 
       <style jsx global>{`
         .hide-scrollbar::-webkit-scrollbar {

@@ -8,9 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { authApi } from '@/lib/api';
-import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function StudentProfilePage() {
   const user = useAuthStore((state) => state.user);
@@ -21,18 +21,18 @@ export default function StudentProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     fullName: user?.fullName || '',
-    phone: user?.phone || '',
+    phoneNo: user?.phoneNo || '',
   });
 
   const handleSave = async () => {
     try {
         await authApi.studentUpdateProfile(formData);
         updateUser(formData);
+        toast.success('Profile updated successfully');
         setIsEditing(false);
-    } catch (e) {
+    } catch (e:any) {
         console.error(e);
-        // Add toast error here if we had toast imported, 
-        // but for now console error is fine or we import toast
+        toast.error(e)
     }
   };
 
@@ -41,21 +41,22 @@ export default function StudentProfilePage() {
     router.push('/auth/login');
   };
 
+  console.log(user)
   return (
     <div className="min-h-screen bg-gradient-to-br from-student-bg via-white to-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-student-primary to-student-dark p-6 text-white">
+      <div className="bg-gradient-to-r from-student-primary to-student-dark py-8 px-6 text-white">
         <h1 className="text-2xl font-bold font-jakarta">My Profile</h1>
         <p className="text-emerald-100 text-sm mt-1">Manage your account information</p>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-16">
+      <div className="max-w-4xl mx-auto px-4 -mt-6">
         {/* Profile Picture Card */}
         <Card className="shadow-lg border-0 bg-white mb-6">
           <CardContent className="p-6 text-center">
             <div className="relative inline-block mb-4">
               <Avatar className="w-28 h-28 border-4 border-white shadow-lg">
-                <AvatarImage src={user?.avatar} alt={user?.fullName} />
+                <AvatarImage src={user?.profileImage} alt={user?.fullName} />
                 <AvatarFallback className="bg-gradient-to-br from-student-primary to-student-dark text-white text-3xl font-bold">
                   {user?.fullName?.charAt(0) || 'S'}
                 </AvatarFallback>
@@ -129,12 +130,12 @@ export default function StudentProfilePage() {
               </label>
               {isEditing ? (
                 <Input
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  value={formData.phoneNo}
+                  onChange={(e) => setFormData({ ...formData, phoneNo: e.target.value })}
                   className="mt-1"
                 />
               ) : (
-                <p className="text-gray-800 font-medium mt-1">{user?.phone}</p>
+                <p className="text-gray-800 font-medium mt-1">{user?.phoneNo}</p>
               )}
             </div>
 
@@ -194,8 +195,6 @@ export default function StudentProfilePage() {
           </CardContent>
         </Card>
       </div>
-
-      <StudentBottomNav />
     </div>
   );
 }
