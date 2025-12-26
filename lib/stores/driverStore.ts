@@ -1,17 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-interface DriverStats {
-  dailyEarnings: number;
-  weeklyEarnings: number;
-  monthlyEarnings: number;
-  totalEarnings: number;
-  completedTrips: number;
-  cancelledTrips: number;
-  totalTrips: number;
-  rating: number;
-  totalRatings: number;
-}
+import { DriverStats } from '../types';
 
 interface DriverState {
   isAvailable: boolean;

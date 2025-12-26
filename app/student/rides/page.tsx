@@ -1,15 +1,13 @@
 //app/student/rides
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   MapPin,
   Navigation,
   Phone,
-  MessageCircle,
   Car,
   Calendar,
-  User,
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,8 +16,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
-import { useRideStore } from '@/lib/stores/rideStore';
-import { rideApi } from '@/lib/api';
 import { STATUS_CONFIG, RideStatus } from '@/lib/helpers';
 
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
@@ -29,52 +25,42 @@ import Link from 'next/link';
 import NoActiveRide from '@/components/shared/NoActiveRide';
 import NoRideHistory from '@/components/shared/NoRideHistory';
 
+// React Query hooks
+import { useStudentRides, useRateRide } from '@/lib/hooks';
+
 export default function StudentRidesPage() {
-  const activeRide = useRideStore((s) => s.activeRide);
-  const setActiveRide = useRideStore((s) => s.setActiveRide);
-
-  const [rides, setRides] = useState<any[]>([]);
   const [tab, setTab] = useState<'active' | 'history'>('active');
-
   const [rateModalOpen, setRateModalOpen] = useState(false);
   const [selectedRide, setSelectedRide] = useState<any>(null);
 
-  useEffect(() => {
-    rideApi.getStudentRides().then((res) => {
-      if (!res.success) return;
+  // React Query hooks
+  const { data: ridesData } = useStudentRides();
+  const rateRideMutation = useRateRide();
 
-      setRides(res.rides);
+  const rides = ridesData?.rides || [];
 
-      const current = res.rides.find((r: any) =>
-        ['pending', 'accepted', 'ongoing'].includes(r.status)
-      );
-
-      if (current) {
-        setActiveRide(current);
-      }
-    });
-  }, [setActiveRide]);
+  // Derive active ride from React Query data (single source of truth)
+  const activeRide = rides.find((r: any) =>
+    ['pending', 'accepted', 'ongoing'].includes(r.status)
+  );
 
   const handleRateSubmit = async (rating: number, review?: string) => {
     if (!selectedRide) return;
 
     try {
-      const res = await rideApi.rateRide(selectedRide._id, { rating, review });
-      if (res.success) {
-        toast.success('Rating submitted');
-        setRides((prev) =>
-          prev.map((r) =>
-            r._id === selectedRide._id ? { ...r, rating } : r
-          )
-        );
-        setRateModalOpen(false);
-      }
+      await rateRideMutation.mutateAsync({
+        rideId: selectedRide._id,
+        rating,
+        review,
+      });
+      toast.success('Rating submitted');
+      setRateModalOpen(false);
     } catch {
       toast.error('Failed to submit rating');
     }
   };
 
-  const historyRides = rides.filter((r) =>
+  const historyRides = rides.filter((r: any) =>
     ['completed', 'cancelled'].includes(r.status)
   );  
 
@@ -103,7 +89,7 @@ export default function StudentRidesPage() {
                       {STATUS_CONFIG[activeRide.status as RideStatus].label}
                     </Badge>
                     <span className="text-sm text-gray-500">
-                      #{activeRide._id.slice(0, 8)}
+                      #{activeRide?._id?.slice(0, 8) ?? '—'}
                     </span>
                   </div>
 
@@ -143,10 +129,6 @@ export default function StudentRidesPage() {
                             Call
                           </Link>
                         </Button>
-                        {/* <Button variant="outline" className="flex-1">
-                          <MessageCircle className="w-4 h-4 mr-2" />
-                          Message
-                        </Button> */}
                       </div>
                     </div>
                   )}
@@ -170,9 +152,9 @@ export default function StudentRidesPage() {
               <NoRideHistory/>
             ) : (
             <div className="space-y-4">
-              {historyRides.map((ride) => (
+              {historyRides.map((ride: any) => (
                   <Card key={ride._id}>
-                    <CardContent className="p-4">
+                    <CardContent>
                       <div className="flex justify-between mb-2">
                         <div>
                           <p className="text-sm">{ride.pickupLocation.address}</p>
@@ -196,7 +178,7 @@ export default function StudentRidesPage() {
                       {ride.status === 'completed' && !ride.rating && (
                         <Button
                           variant="ghost"
-                          className="mt-3 w-full"
+                          className="mt-3 w-full bg-student-primary text-white"
                           onClick={() => {
                             setSelectedRide(ride);
                             setRateModalOpen(true);

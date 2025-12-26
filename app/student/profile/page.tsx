@@ -42,6 +42,7 @@ export default function StudentProfilePage() {
   };
 
   console.log(user)
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-student-bg via-white to-gray-50 pb-20">
       {/* Header */}

@@ -10,6 +10,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { authApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 export default function DriverProfilePage() {
   const user = useAuthStore((state) => state.user);
@@ -230,13 +231,15 @@ export default function DriverProfilePage() {
             <CardTitle className="text-lg">Account Settings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button
-              variant="outline"
-              className="w-full justify-start h-12 hover:bg-rider-primary/10"
-            >
-              <SettingsIcon className="w-5 h-5 mr-3 text-rider-primary" />
-              <span>App Settings</span>
-            </Button>
+            <Link href="/driver/settings">
+              <Button
+                variant="outline"
+                className="w-full justify-start h-12 hover:bg-rider-primary/10"
+              >
+                <SettingsIcon className="w-5 h-5 mr-3 text-rider-primary" />
+                <span>App Settings</span>
+              </Button>
+            </Link>
             
             <Button
               variant="outline"

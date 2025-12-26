@@ -1,6 +1,7 @@
+// app/driver/rides/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   MapPin,
   Navigation,
@@ -9,8 +10,6 @@ import {
   CheckCircle,
   Calendar,
   User,
-  Car,
-  CarIcon,
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,56 +18,57 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
-import { useRideStore } from '@/lib/stores/rideStore';
-import { rideApi } from '@/lib/api';
 import { RideStatus, STATUS_CONFIG } from '@/lib/helpers';
 
 import { toast } from 'sonner';
 import NoActiveRide from '@/components/shared/NoActiveRide';
 import NoRideHistory from '@/components/shared/NoRideHistory';
 
-export default function DriverRidesPage() {
-  const activeRide = useRideStore((s) => s.activeRide);
-  const setActiveRide = useRideStore((s) => s.setActiveRide);
-  const clearActiveRide = useRideStore((s) => s.clearActiveRide);
+// React Query hooks
+import { useDriverRides, useStartRide, useCompleteRide } from '@/lib/hooks';
 
-  const [rides, setRides] = useState<any[]>([]);
+export default function DriverRidesPage() {
   const [tab, setTab] = useState<'active' | 'history'>('active');
 
-  useEffect(() => {
-    rideApi.getDriverRides().then((res) => {
-      if (!res.success) return;
-      setRides(res.rides);
+  // React Query hooks
+  const { data: ridesData } = useDriverRides();
+  const startRideMutation = useStartRide();
+  const completeRideMutation = useCompleteRide();
 
-      const current = res.rides.find((r: any) =>
-        ['accepted', 'ongoing'].includes(r.status)
-      );
-      if (current) setActiveRide(current);
-    });
-  }, [setActiveRide]);
+  const rides = ridesData?.rides || [];
+
+  // Derive active ride from React Query data (single source of truth)
+  const activeRide = rides.find((r: any) =>
+    ['accepted', 'ongoing'].includes(r.status)
+  );
 
   const startRide = async () => {
     if (!activeRide) return;
-    const res = await rideApi.startRide(activeRide._id);
-    if (res.success) {
-      setActiveRide(res.ride);
+    
+    try {
+      await startRideMutation.mutateAsync(activeRide._id);
       toast.success('Ride started');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to start ride');
     }
   };
 
   const completeRide = async () => {
     if (!activeRide) return;
-    const res = await rideApi.completeRide(activeRide.id, {
-      actualDistance: 5,
-      actualDuration: 15,
-    });
-    if (res.success) {
+    
+    try {
+      await completeRideMutation.mutateAsync({
+        rideId: activeRide._id,
+        actualDistance: 5,
+        actualDuration: 15,
+      });
       toast.success('Ride completed');
-      clearActiveRide();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to complete ride');
     }
   };
 
-  const historyRides = rides.filter((r) =>
+  const historyRides = rides.filter((r: any) =>
     ['completed', 'cancelled'].includes(r.status)
   );  
 
@@ -94,11 +94,11 @@ export default function DriverRidesPage() {
                 <CardContent className="p-4">
                   {/* Status */}
                   <div className="flex items-center justify-between mb-4">
-                    <Badge className={`${STATUS_CONFIG[activeRide.status].color} text-white`}>
-                      {STATUS_CONFIG[activeRide.status].label}
+                    <Badge className={`${STATUS_CONFIG[activeRide.status as RideStatus].color} text-white`}>
+                      {STATUS_CONFIG[activeRide.status as RideStatus].label}
                     </Badge>
                     <p className="text-sm text-gray-500">
-                      ID: #{activeRide._id.slice(0, 6)}
+                      ID: #{activeRide?._id?.slice(0, 6) ?? '—'}
                     </p>
                   </div>
 
@@ -158,14 +158,22 @@ export default function DriverRidesPage() {
 
                   {/* Actions */}
                   {activeRide.status === 'accepted' && (
-                    <Button className="w-full h-12 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold" onClick={startRide}>
+                    <Button 
+                      className="w-full h-12 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold" 
+                      onClick={startRide}
+                      disabled={startRideMutation.isPending}
+                    >
                       <Play className="w-4 h-4 mr-2" />
                       Start Ride
                     </Button>
                   )}
 
                   {activeRide.status === 'ongoing' && (
-                    <Button className="w-full h-12 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold" onClick={completeRide}>
+                    <Button 
+                      className="w-full h-12 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold" 
+                      onClick={completeRide}
+                      disabled={completeRideMutation.isPending}
+                    >
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Complete Ride
                     </Button>
@@ -190,9 +198,9 @@ export default function DriverRidesPage() {
               <NoRideHistory/>
             ) : (
               <div className="space-y-4">
-                {historyRides.map((ride) => (
+                {historyRides.map((ride: any) => (
                   <Card key={ride._id}>
-                    <CardContent className="p-4">
+                    <CardContent>
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
@@ -221,7 +229,7 @@ export default function DriverRidesPage() {
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            {new Date(ride.requestedAt).toLocaleDateString()}
+                            {new Date(ride.createdAt).toLocaleDateString()}
                           </div>
 
                           {ride.student?.fullName && (

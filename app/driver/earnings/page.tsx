@@ -1,3 +1,4 @@
+//app/driver/earnings/page.tsx
 'use client';
 
 import { DollarSign, TrendingUp, Car, XCircle, Calendar, BarChart3 } from 'lucide-react';

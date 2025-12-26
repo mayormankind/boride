@@ -1,6 +1,6 @@
 //lib/api.ts
 import axios, { AxiosResponse } from 'axios';
-import type { ApiResponse, StudentRidesResponse, WalletData, WalletTransactionsData } from './types';
+import type { ApiResponse, DriverStats, StudentRidesResponse, StudentStats, WalletData, WalletTransactionsData } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -163,5 +163,14 @@ export const walletApi = {
     
   withdrawFromWallet: (data: { amount: number; bankDetails: any }) => 
     api.post<WalletData>('/driver/wallet/withdraw', data),
+};
+
+// ==================== STUDENT API ====================
+export const studentApi = {
+  getStats: () => api.get<StudentStats>('/student/stats'),
+};
+
+export const driverApi = {
+  getStats: () => api.get<DriverStats>('/driver/stats'),
 };
 

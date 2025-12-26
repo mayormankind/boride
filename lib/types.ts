@@ -1,5 +1,5 @@
 // Type definitions for BoRide application
-
+//lib/types.ts
 export type UserRole = 'student' | 'driver';
 
 export type RideStatus = 'pending' | 'accepted' | 'on-the-way' | 'in-trip' | 'completed' | 'cancelled';
@@ -8,13 +8,13 @@ export interface User {
   id: string;
   fullName: string;
   email: string;
-  phone: string;
-  role: UserRole;
-  avatar?: string;
+  phoneNo: string;
+  role: 'student' | 'driver';
+  profileImage?: string;
   matricNo?: string; // for students
   vehicleInfo?: VehicleInfo; // for drivers
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface VehicleInfo {
@@ -175,4 +175,18 @@ export interface BackendRide {
   fare: number;
   status: string;
   createdAt: string;
+}
+
+export interface StudentStats {
+  student: {
+    fullName: string;
+    matricNo: string;
+  };
+  walletBalance: number;
+  rides: {
+    total: number;
+    completed: number;
+    ongoing: number;
+    cancelled: number;
+  };
 }

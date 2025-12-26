@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { MapPin, Navigation, Clock, ChevronRight, Car, Loader2Icon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,11 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { rideApi, walletApi } from '@/lib/api';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 import { PaymentMethodModal } from '@/components/shared/PaymentMethodModal';
 import { BackendRide } from '@/lib/types';
+
+// React Query hooks
+import { useWalletBalance, useStudentRides, useBookRide } from '@/lib/hooks';
 
 const SAVED_LOCATIONS = [
   { id: '1', name: 'Hostel', address: 'Student Hostel Block A' },
@@ -26,64 +27,33 @@ const ESTIMATED_FARE = 500;
 export default function StudentDashboard() {
   const user = useAuthStore((state) => state.user);
 
-  const [rides, setRides] = useState<BackendRide[]>([]);
   const [pickup, setPickup] = useState('');
   const [destination, setDestination] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFetchingRides, setIsFetchingRides] = useState(true);
-
-  const [walletBalance, setWalletBalance] = useState<number>(0);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  const router = useRouter();
+  // React Query hooks
+  const { data: walletBalance = 0, isLoading: isLoadingBalance } = useWalletBalance('student');
+  const { data: ridesData, isLoading: isFetchingRides } = useStudentRides();
+  const bookRideMutation = useBookRide();
 
-  useEffect(() => {
-      fetchRecentRides();
-  }, []);
-
-  const fetchRecentRides = async () => {
-    try {
-      const res = await rideApi.getStudentRides();
-  
-      if (!res.success) {
-        throw new Error(res.message || 'Failed to fetch rides');
-      }
-  
-      setRides((res.rides || []).slice(0, 3));
-    } catch (error) {
-      console.error('Failed to fetch rides', error);
-    } finally {
-      setIsFetchingRides(false);
-    }
-  };
+  const rides = ridesData?.rides?.slice(0, 3) || [];
 
   // Step 1: Fetch wallet balance and open payment modal
   const handleRequestRide = async () => {
     if (!pickup || !destination) return;
 
-    setIsLoading(true);
-    try {
-      const walletRes = await walletApi.getWalletBalance('student');
-      if (!walletRes.success) {
-        throw new Error('Failed to fetch wallet balance');
-      }
-
-      const balance = walletRes.balance || 0;
-      setWalletBalance(balance); // ✅ Store real balance
-      setShowPaymentModal(true);
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.message || "Could not load wallet. Please try again.");
-    } finally {
-      setIsLoading(false);
+    if (isLoadingBalance) {
+      toast.error('Loading wallet balance...');
+      return;
     }
+
+    setShowPaymentModal(true);
   };
 
   // Step 2: Confirm and book ride
   const handleConfirmPayment = async (method: 'Cash' | 'Wallet') => {
     if (!pickup || !destination) return;
 
-    setIsLoading(true);
     try {
       const payload = {
         pickupLocation: {
@@ -100,22 +70,13 @@ export default function StudentDashboard() {
         estimatedDuration: 15,
       };
 
-      const res = await rideApi.bookRide(payload);
-
-      if (res.success) {
-        toast.success("Ride requested successfully!");
-        setPickup('');
-        setDestination('');
-        fetchRecentRides();
-      } else {
-        toast.error(res.message || "Failed to book ride");
-      }
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.message || "An error occurred");
-    } finally {
-      setIsLoading(false);
+      await bookRideMutation.mutateAsync(payload);
+      toast.success("Ride requested successfully!");
+      setPickup('');
+      setDestination('');
       setShowPaymentModal(false);
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred");
     }
   };
 
@@ -179,11 +140,11 @@ export default function StudentDashboard() {
 
             <Button
               onClick={handleRequestRide}
-              disabled={!pickup || !destination || isLoading}
+              disabled={!pickup || !destination || bookRideMutation.isPending}
               className="w-full h-12 bg-gradient-to-r from-student-primary to-student-dark hover:from-student-dark hover:to-student-hover text-white font-semibold text-base shadow-md disabled:from-gray-300 disabled:to-gray-400 transition-all duration-300"
             >
-              {isLoading ? <Loader2Icon className="animate-spin mr-2" /> : null}
-              {isLoading ? "Requesting..." : "Request Ride"}
+              {bookRideMutation.isPending ? <Loader2Icon className="animate-spin mr-2" /> : null}
+              {bookRideMutation.isPending ? "Requesting..." : "Request Ride"}
             </Button>
           </CardContent>
         </Card>
@@ -234,7 +195,7 @@ export default function StudentDashboard() {
             </div>
           ) : rides.length > 0 ? (
             <div className="space-y-3">
-              {rides.map((ride) => (
+              {rides.map((ride: any) => (
                 <Card key={ride._id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">

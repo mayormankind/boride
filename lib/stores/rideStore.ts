@@ -3,7 +3,6 @@ import { create } from 'zustand';
 
 export type RideStatus =
   | 'pending'
-  | 'accepted'
   | 'ongoing'
   | 'completed'
   | 'cancelled';
@@ -60,32 +59,18 @@ export interface Ride {
   endTime?: string;
 }
 
+// Simplified RideStore - only for rideHistory if needed in the future
+// activeRide is now DERIVED from React Query data, not stored here
 interface RideState {
-  activeRide: Ride | null;
   rideHistory: Ride[];
-  setActiveRide: (ride: Ride | null) => void;
-  updateRideStatus: (status: RideStatus) => void;
   addToHistory: (ride: Ride) => void;
-  clearActiveRide: () => void;
 }
 
 export const useRideStore = create<RideState>((set) => ({
-  activeRide: null,
   rideHistory: [],
-
-  setActiveRide: (ride) => set({ activeRide: ride }),
-
-  updateRideStatus: (status) =>
-    set((state) => ({
-      activeRide: state.activeRide
-        ? { ...state.activeRide, status }
-        : null,
-    })),
 
   addToHistory: (ride) =>
     set((state) => ({
       rideHistory: [ride, ...state.rideHistory],
     })),
-
-  clearActiveRide: () => set({ activeRide: null }),
 }));

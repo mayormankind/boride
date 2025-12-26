@@ -1,7 +1,7 @@
 //app/driver/page.tsx
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Power, User as UserIcon, Bell, MapPin, Navigation, DollarSign, Loader2Icon, EyeOff, Eye } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,23 +16,52 @@ import {
 } from '@/components/ui/dialog';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useDriverStore } from '@/lib/stores/driverStore';
-import { useRideStore, type Ride } from '@/lib/stores/rideStore';
-import { authApi, rideApi, walletApi } from '@/lib/api';
+import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
+
+// React Query hooks
+import { 
+  useWalletBalance, 
+  useAvailableRides, 
+  useDriverStats,
+  useDriverRides,
+  useAcceptRide,
+  useStartRide,
+  useCompleteRide 
+} from '@/lib/hooks';
 
 export default function DriverDashboard() {
   const user = useAuthStore((state) => state.user);
-  const { isAvailable, setAvailability, stats } = useDriverStore();
+  const { isAvailable, setAvailability } = useDriverStore();
 
-  const { activeRide, setActiveRide, clearActiveRide } = useRideStore();
-
-  const [availableRides, setAvailableRides] = useState<any[]>([]);
   const [showRequestDialog, setShowRequestDialog] = useState(false);
   const [currentRequest, setCurrentRequest] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [walletBalance, setWalletBalance] = useState(0);
-  const [ showBalance, setShowBalance ] = useState(false);
+  const [showBalance, setShowBalance] = useState(false);
 
+  // React Query hooks
+  const { data: walletBalance = 0 } = useWalletBalance('driver');
+  const { data: stats } = useDriverStats();
+  
+  // Get driver rides to derive active ride
+  const { data: ridesData } = useDriverRides();
+  
+  // Derive active ride from React Query data (single source of truth)
+  const activeRide = ridesData?.rides?.find((r: any) =>
+    ['accepted', 'ongoing'].includes(r.status)
+  );
+  
+  // Only poll for available rides when driver is available and has no active ride
+  const { data: availableRidesData } = useAvailableRides({ 
+    enabled: isAvailable && !activeRide 
+  });
+
+  // Mutations
+  const acceptRideMutation = useAcceptRide();
+  const startRideMutation = useStartRide();
+  const completeRideMutation = useCompleteRide();
+
+  // Sync availability on mount
   useEffect(() => {
     const syncAvailability = async () => {
       const res = await authApi.getMe();
@@ -42,45 +71,15 @@ export default function DriverDashboard() {
     };
   
     syncAvailability();
-  }, []);
-  
-  // Polling for available rides
+  }, [setAvailability]);
+
+  // Auto-prompt first available ride
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-
-    const fetchAvailableRides = async () => {
-      if (isAvailable && !activeRide) {
-        try {
-          const res = await rideApi.getAvailableRides();
-          if (res.success && res.count > 0) {
-            setAvailableRides(res.rides);
-            // Auto-prompt the first one if no dialog is open
-            if (!showRequestDialog && !currentRequest) {
-                setCurrentRequest(res.rides[0]);
-                setShowRequestDialog(true);
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching available rides", error);
-        }
-      }
-    };
-
-    const fetchWallet = async () => {
-      try {
-        const res = await walletApi.getWalletBalance('driver');
-        if(res.success) setWalletBalance(res.balance);
-      } catch(e) {}
+    if (availableRidesData?.rides?.length && !showRequestDialog && !currentRequest) {
+      setCurrentRequest(availableRidesData.rides[0]);
+      setShowRequestDialog(true);
     }
-
-    if (isAvailable) {
-      fetchAvailableRides(); // Initial fetch
-      fetchWallet();
-      interval = setInterval(fetchAvailableRides, 10000); // Poll every 10s
-    }
-
-    return () => clearInterval(interval);
-  }, [isAvailable, activeRide, showRequestDialog, currentRequest]);
+  }, [availableRidesData, showRequestDialog, currentRequest]);
 
   const handleToggleOnline = async () => {
     setIsLoading(true);
@@ -89,7 +88,6 @@ export default function DriverDashboard() {
   
       if (res.success) {
         setAvailability(res.isAvailable);
-  
         toast.success(res.isAvailable ? "You are now Online" : "You are now Offline");
       }
     } catch (error: any) {
@@ -98,71 +96,64 @@ export default function DriverDashboard() {
       setIsLoading(false);
     }
   };
-  
 
   const handleAcceptRide = async () => {
     if (!currentRequest) return;
-    setIsLoading(true);
+    
     try {
-        // Mock estimated arrival for now (5 mins)
-        const res = await rideApi.acceptRide(currentRequest._id || currentRequest.id, { estimatedArrival: 5 });
-        if (res.success) {
-            toast.success("Ride accepted!");
-            setActiveRide(res.ride); // Update store with accepted ride
-            setShowRequestDialog(false);
-            setCurrentRequest(null);
-        } else {
-            toast.error(res.message || "Failed to accept ride");
-        }
+      const result = await acceptRideMutation.mutateAsync({
+        rideId: currentRequest._id || currentRequest.id,
+        estimatedArrival: 5,
+      });
+      
+      if (result.success) {
+        toast.success("Ride accepted!");
+        setShowRequestDialog(false);
+        setCurrentRequest(null);
+      }
     } catch (error: any) {
-        toast.error(error.message || "Error accepting ride");
-    } finally {
-        setIsLoading(false);
+      toast.error(error.message || "Error accepting ride");
     }
   };
 
   const handleDeclineRide = () => {
-    // Just close dialog and maybe ignore this ID for a while in local state
     setShowRequestDialog(false);
     setCurrentRequest(null);
-    // In real app, maybe inform backend to ignore
   };
 
   const handleStartRide = async () => {
-      if(!activeRide) return;
-      try {
-          const res = await rideApi.startRide(activeRide.id || (activeRide as any)._id);
-          if(res.success) {
-              toast.success("Ride started");
-              setActiveRide(res.ride);
-          }
-      } catch (error: any) {
-          toast.error(error.message || "Failed to start ride");
-      }
-  };
-
-  const handleCompleteRide = async () => {
-    if(!activeRide) return;
+    if (!activeRide) return;
+    
     try {
-        // Mock distance/duration
-        const res = await rideApi.completeRide(activeRide.id || (activeRide as any)._id, { actualDistance: 3, actualDuration: 20 });
-        if(res.success) {
-            toast.success("Ride completed. Payment credited.");
-            clearActiveRide();
-            // Refresh wallet
-            const bRes = await walletApi.getWalletBalance('driver');
-            if(bRes.success) setWalletBalance(bRes.balance);
-        }
+      await startRideMutation.mutateAsync(
+        activeRide._id || activeRide.id
+      );
+      toast.success("Ride started");
     } catch (error: any) {
-        toast.error(error.message || "Failed to complete ride");
+      toast.error(error.message || "Failed to start ride");
     }
   };
 
-  const toggleBalance = () =>{
-    setShowBalance(!showBalance)
-  }
+  const handleCompleteRide = async () => {
+    if (!activeRide) return;
+    
+    try {
+      await completeRideMutation.mutateAsync({
+        rideId: activeRide._id || activeRide.id,
+        actualDistance: 3,
+        actualDuration: 20,
+      });
+      
+      toast.success("Ride completed. Payment credited.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to complete ride");
+    }
+  };
 
-  console.log(activeRide)
+  const toggleBalance = () => {
+    setShowBalance(!showBalance);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-rider-bg via-white to-gray-50 pb-20">
       {/* Header */}
@@ -214,33 +205,62 @@ export default function DriverDashboard() {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Wallet & Stats Summary */}
-        {/* <div className="grid grid-cols-2 gap-4 mb-6"> */}
-          <Card className="shadow-md mb-5 elative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-500 text-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <p className="text-sm text-gray-600">Total Balance</p>
-                {showBalance ? <EyeOff className="w-4 h-4 text-gray-600" onClick={()=> toggleBalance()}/> : <Eye className="w-4 h-4 text-gray-600" onClick={()=> toggleBalance()}/> }
+        <div className="space-y-4 mb-6">
+
+          {/* Wallet Card – Primary */}
+          <Card className="relative overflow-hidden bg-gradient-to-r from-emerald-600 to-green-500 text-white shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm text-white/80">Wallet Balance</p>
+
+                <button
+                  onClick={toggleBalance}
+                  className="p-2 rounded-full hover:bg-white/10 transition"
+                >
+                  {showBalance ? (
+                    <EyeOff className="w-4 h-4 text-white" />
+                  ) : (
+                    <Eye className="w-4 h-4 text-white" />
+                  )}
+                </button>
               </div>
-              <p className="text-2xl text-center font-bold text-gray-800">
-                {showBalance ? `₦${walletBalance.toLocaleString()}` : '********'}
+
+              <p className="text-3xl font-bold tracking-tight">
+                {showBalance ? `₦${walletBalance.toLocaleString()}` : '••••••••'}
               </p>
+
+              <p className="text-xs text-white/70 mt-1">
+                Available for withdrawal
+              </p>
+
+              {/* Decorative Accent */}
+              <DollarSign className="absolute right-4 bottom-4 w-20 h-20 text-white/10" />
             </CardContent>
           </Card>
 
-          {/* <Card className="shadow-md">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-10 h-10 rounded-full bg-rider-primary/10 flex items-center justify-center">
-                  <UserIcon className="w-5 h-5 text-rider-primary" />
-                </div>
-                <p className="text-sm text-gray-600">Rating</p>
-              </div>
-              <p className="text-2xl font-bold text-gray-800">
-                {stats?.rating?.toFixed(1) || '5.0'}⭐
-              </p>
-            </CardContent>
-          </Card> */}
-        {/* </div> */}
+          {/* Stats Row – Secondary */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="shadow-sm">
+              <CardContent className="p-4">
+                <p className="text-xs text-gray-500 mb-1">Total Rides</p>
+                <p className="text-xl font-bold text-gray-800">
+                  {stats?.totalTrips || 0}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm">
+              <CardContent className="p-4">
+                <p className="text-xs text-gray-500 mb-1">Rating</p>
+                <p className="text-xl font-bold text-gray-800">
+                  {stats?.rating?.toFixed(1) || '5.0'} ⭐
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+        </div>
+
 
         {/* Active Ride Control or Status */}
         {activeRide ? (
@@ -254,7 +274,7 @@ export default function DriverDashboard() {
                         </div>
                         <div className="flex justify-between items-center">
                              <span className="text-gray-600">Route</span>
-                             <span className="font-semibold text-right">{activeRide?.pickupLocation.address} <br/>to {activeRide?.dropoffLocation.address}</span>
+                             <span className="font-semibold text-right">{activeRide.pickupLocation?.address} <br/>to {activeRide.dropoffLocation?.address}</span>
                         </div>
                         <div className="flex justify-between items-center">
                              <span className="text-gray-600">Status</span>
@@ -263,12 +283,22 @@ export default function DriverDashboard() {
 
                         <div className="pt-4 flex gap-3">
                             {activeRide.status === 'accepted' && (
-                                <Button onClick={handleStartRide} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+                                <Button 
+                                  onClick={handleStartRide} 
+                                  disabled={startRideMutation.isPending}
+                                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                    {startRideMutation.isPending ? <Loader2Icon className="animate-spin mr-2" /> : null}
                                     Start Trip
                                 </Button>
                             )}
-                            {activeRide.status === 'accepted' && (
-                                <Button onClick={handleCompleteRide} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+                            {activeRide.status === 'ongoing' && (
+                                <Button 
+                                  onClick={handleCompleteRide} 
+                                  disabled={completeRideMutation.isPending}
+                                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                    {completeRideMutation.isPending ? <Loader2Icon className="animate-spin mr-2" /> : null}
                                     Complete Trip
                                 </Button>
                             )}
@@ -307,7 +337,7 @@ export default function DriverDashboard() {
                     <h3 className="text-xl font-bold text-gray-700 mb-2">Waiting for Ride Requests...</h3>
                     <p className="text-gray-600">
                         You're online and ready to accept rides. 
-                        {availableRides.length > 0 ? ` (${availableRides.length} available)` : ''}
+                        {availableRidesData?.count ? ` (${availableRidesData.count} available)` : ''}
                     </p>
                     </CardContent>
                 </Card>
@@ -384,10 +414,10 @@ export default function DriverDashboard() {
                 </Button>
                 <Button
                   onClick={handleAcceptRide}
-                  disabled={isLoading}
+                  disabled={acceptRideMutation.isPending}
                   className="flex-1 bg-gradient-to-r from-rider-primary to-rider-dark hover:from-rider-dark hover:to-rider-hover text-white"
                 >
-                  {isLoading ? <Loader2Icon className="animate-spin mr-2"/> : "Accept Ride"}
+                  {acceptRideMutation.isPending ? <Loader2Icon className="animate-spin mr-2"/> : "Accept Ride"}
                 </Button>
               </div>
             </div>
