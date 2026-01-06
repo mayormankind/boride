@@ -1,35 +1,29 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 //app/student/rides
-'use client';
+"use client";
 
-import { useState } from 'react';
-import {
-  MapPin,
-  Navigation,
-  Phone,
-  Car,
-  Calendar,
-} from 'lucide-react';
+import { useState } from "react";
+import { MapPin, Navigation, Phone, Car, Calendar } from "lucide-react";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
-import { STATUS_CONFIG, RideStatus } from '@/lib/helpers';
+import { STATUS_CONFIG, RideStatus } from "@/lib/helpers";
 
-import StudentBottomNav from '@/components/shared/StudentBottomNav';
-import { RateRideModal } from '@/components/shared/RateRideModal';
-import { toast } from 'sonner';
-import Link from 'next/link';
-import NoActiveRide from '@/components/shared/NoActiveRide';
-import NoRideHistory from '@/components/shared/NoRideHistory';
+import { RateRideModal } from "@/components/shared/RateRideModal";
+import { toast } from "sonner";
+import Link from "next/link";
+import NoActiveRide from "@/components/shared/NoActiveRide";
+import NoRideHistory from "@/components/shared/NoRideHistory";
 
 // React Query hooks
-import { useStudentRides, useRateRide } from '@/lib/hooks';
+import { useStudentRides, useRateRide } from "@/lib/hooks";
 
 export default function StudentRidesPage() {
-  const [tab, setTab] = useState<'active' | 'history'>('active');
+  const [tab, setTab] = useState<"active" | "history">("active");
   const [rateModalOpen, setRateModalOpen] = useState(false);
   const [selectedRide, setSelectedRide] = useState<any>(null);
 
@@ -41,7 +35,7 @@ export default function StudentRidesPage() {
 
   // Derive active ride from React Query data (single source of truth)
   const activeRide = rides.find((r: any) =>
-    ['pending', 'accepted', 'ongoing'].includes(r.status)
+    ["pending", "accepted", "ongoing"].includes(r.status)
   );
 
   const handleRateSubmit = async (rating: number, review?: string) => {
@@ -53,16 +47,16 @@ export default function StudentRidesPage() {
         rating,
         review,
       });
-      toast.success('Rating submitted');
+      toast.success("Rating submitted");
       setRateModalOpen(false);
     } catch {
-      toast.error('Failed to submit rating');
+      toast.error("Failed to submit rating");
     }
   };
 
   const historyRides = rides.filter((r: any) =>
-    ['completed', 'cancelled'].includes(r.status)
-  );  
+    ["completed", "cancelled"].includes(r.status)
+  );
 
   return (
     <div className="min-h-screen pb-20 bg-gradient-to-br from-student-bg via-white to-gray-50">
@@ -75,8 +69,18 @@ export default function StudentRidesPage() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
           <TabsList className="grid grid-cols-2 mb-6 w-full">
-            <TabsTrigger value="active" className="data-[state=active]:bg-student-primary data-[state=active]:text-white">Active Ride</TabsTrigger>
-            <TabsTrigger value="history" className="data-[state=active]:bg-student-primary data-[state=active]:text-white">Ride History</TabsTrigger>
+            <TabsTrigger
+              value="active"
+              className="data-[state=active]:bg-student-primary data-[state=active]:text-white"
+            >
+              Active Ride
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="data-[state=active]:bg-student-primary data-[state=active]:text-white"
+            >
+              Ride History
+            </TabsTrigger>
           </TabsList>
 
           {/* ACTIVE */}
@@ -85,11 +89,15 @@ export default function StudentRidesPage() {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex justify-between mb-4">
-                    <Badge className={`${STATUS_CONFIG[activeRide.status as RideStatus].color} text-white`}>
+                    <Badge
+                      className={`${
+                        STATUS_CONFIG[activeRide.status as RideStatus].color
+                      } text-white`}
+                    >
                       {STATUS_CONFIG[activeRide.status as RideStatus].label}
                     </Badge>
                     <span className="text-sm text-gray-500">
-                      #{activeRide?._id?.slice(0, 8) ?? '—'}
+                      #{activeRide?._id?.slice(0, 8) ?? "—"}
                     </span>
                   </div>
 
@@ -124,7 +132,10 @@ export default function StudentRidesPage() {
 
                       <div className="flex gap-3">
                         <Button variant="outline" className="flex-1">
-                          <Link href={`tel:${activeRide.driver.phoneNo}`} className="flex items-center">
+                          <Link
+                            href={`tel:${activeRide.driver.phoneNo}`}
+                            className="flex items-center"
+                          >
                             <Phone className="w-4 h-4 mr-2" />
                             Call
                           </Link>
@@ -139,28 +150,46 @@ export default function StudentRidesPage() {
                       ₦{activeRide.fare.toLocaleString()}
                     </span>
                   </div>
+
+                  {/* View Timeline Link */}
+                  <Link href={`/student/rides/${activeRide._id}`}>
+                    <Button
+                      variant="outline"
+                      className="w-full mt-4 border-student-primary text-student-primary hover:bg-student-primary hover:text-white"
+                    >
+                      View Ride Timeline
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ) : (
-              <NoActiveRide/>
+              <NoActiveRide />
             )}
           </TabsContent>
 
           {/* HISTORY */}
           <TabsContent value="history">
             {historyRides.length === 0 ? (
-              <NoRideHistory/>
+              <NoRideHistory />
             ) : (
-            <div className="space-y-4">
-              {historyRides.map((ride: any) => (
+              <div className="space-y-4">
+                {historyRides.map((ride: any) => (
                   <Card key={ride._id}>
                     <CardContent>
                       <div className="flex justify-between mb-2">
                         <div>
-                          <p className="text-sm">{ride.pickupLocation.address}</p>
-                          <p className="text-sm">{ride.dropoffLocation.address}</p>
+                          <p className="text-sm">
+                            {ride.pickupLocation.address}
+                          </p>
+                          <p className="text-sm">
+                            {ride.dropoffLocation.address}
+                          </p>
                         </div>
-                        <Badge className={`${STATUS_CONFIG[ride.status as RideStatus].color} text-white`}>
+                        <Badge
+                          className={`${
+                            STATUS_CONFIG[ride.status as RideStatus].color
+                          } text-white`}
+                        >
                           {STATUS_CONFIG[ride.status as RideStatus].label}
                         </Badge>
                       </div>
@@ -175,11 +204,13 @@ export default function StudentRidesPage() {
                         </span>
                       </div>
 
-                      {ride.status === 'completed' && !ride.rating && (
+                      {ride.status === "completed" && !ride.rating && (
                         <Button
                           variant="ghost"
                           className="mt-3 w-full bg-student-primary text-white"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             setSelectedRide(ride);
                             setRateModalOpen(true);
                           }}
@@ -187,11 +218,21 @@ export default function StudentRidesPage() {
                           Rate Driver
                         </Button>
                       )}
+
+                      {/* View Timeline Link */}
+                      <Link href={`/student/rides/${ride._id}`}>
+                        <Button
+                          variant="ghost"
+                          className="mt-2 w-full text-student-primary hover:bg-student-primary/10"
+                        >
+                          View Details
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 ))}
-            </div>
-          )}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
@@ -200,7 +241,7 @@ export default function StudentRidesPage() {
         isOpen={rateModalOpen}
         onClose={() => setRateModalOpen(false)}
         onSubmit={handleRateSubmit}
-        driverName={selectedRide?.driver?.fullName ?? 'Driver'}
+        driverName={selectedRide?.driver?.fullName ?? "Driver"}
       />
     </div>
   );

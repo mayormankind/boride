@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 //app/driver/page.tsx
 'use client';
 
@@ -161,7 +162,7 @@ export default function DriverDashboard() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold font-jakarta">
-              Welcome back, {user?.fullName?.split(' ')[0] || 'Driver'}! 👋
+              Hello, {user?.fullName?.split(' ')[0] || 'Driver'}! 👋
             </h1>
             <p className="text-blue-100 text-sm mt-1">
               {isAvailable ? 'You are online and ready for rides' : 'Go online to start earning'}

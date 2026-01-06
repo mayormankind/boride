@@ -1,45 +1,53 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import StudentRegisterForm from '@/components/form/StudentRegisterForm';
-import RiderRegisterForm from '@/components/form/DriverRegisterForm';
-import { GraduationCap, Car } from 'lucide-react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { authApi } from '@/lib/api';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import StudentRegisterForm from "@/components/form/StudentRegisterForm";
+import RiderRegisterForm from "@/components/form/DriverRegisterForm";
+import { GraduationCap, Car } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { authApi } from "@/lib/api";
+import { toast } from "sonner";
 
-type UserRole = 'student' | 'rider';
+type UserRole = "student" | "rider";
 
 export default function RegisterPage() {
-  const [selectedRole, setSelectedRole] = useState<UserRole>('student');
+  const [selectedRole, setSelectedRole] = useState<UserRole>("student");
   const router = useRouter();
-  const [ isSubmitting, setisSubmitting ] = useState(false)
+  const [isSubmitting, setisSubmitting] = useState(false);
 
   const handleStudentSubmit = async (data: any) => {
-    setisSubmitting(true)
-    try{
-      console.log('Student registration data:', data);
+    setisSubmitting(true);
+    try {
+      console.log("Student registration data:", data);
       const res = await authApi.studentRegister(data);
-      toast.success(res.message ?? 'Registration successful. Check your email for OTP.');
-      router.push(`/auth/verify?email=${encodeURIComponent(data.email)}&role=student`);
-    }catch(err:any){
-      console.log(err.message)
-      toast.error(err.message)
-    }finally{
-      setisSubmitting(false)
+      toast.success(
+        res.message ?? "Registration successful. Check your email for OTP."
+      );
+      router.push(
+        `/auth/verify?email=${encodeURIComponent(data.email)}&role=student`
+      );
+    } catch (err: any) {
+      console.log(err.message);
+      toast.error(err.message);
+    } finally {
+      setisSubmitting(false);
     }
   };
 
   const handleRiderSubmit = async (data: any) => {
     setisSubmitting(true);
     try {
-      console.log('Rider registration data:', data);
+      console.log("Rider registration data:", data);
       const res = await authApi.driverRegister(data);
-      toast.success(res.message ?? 'Registration successful. Check your email for OTP.');
-      router.push(`/auth/verify?email=${encodeURIComponent(data.email)}&role=driver`); 
+      toast.success(
+        res.message ?? "Registration successful. Check your email for OTP."
+      );
+      router.push(
+        `/auth/verify?email=${encodeURIComponent(data.email)}&role=driver`
+      );
     } catch (err: any) {
       console.log(err.message);
       toast.error(err.message);
@@ -49,43 +57,51 @@ export default function RegisterPage() {
   };
 
   const studentColor = {
-    primary: 'from-emerald-500 to-green-600',
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-500',
-    text: 'text-emerald-600',
-    toggle: 'bg-emerald-500',
-    overlay: 'from-emerald-900/90 to-green-900/70',
-    formBg: 'bg-emerald-50/40',
-    accentBorder: 'border-emerald-200',
+    primary: "from-emerald-500 to-green-600",
+    bg: "bg-emerald-50",
+    border: "border-emerald-500",
+    text: "text-emerald-600",
+    toggle: "bg-emerald-500",
+    overlay: "from-emerald-900/90 to-green-900/70",
+    formBg: "bg-emerald-50/40",
+    accentBorder: "border-emerald-200",
   };
 
   const riderColor = {
-    primary: 'from-blue-500 to-indigo-600',
-    bg: 'bg-blue-50',
-    border: 'border-blue-500',
-    text: 'text-blue-600',
-    toggle: 'bg-blue-500',
-    overlay: 'from-blue-900/90 to-indigo-900/70',
-    formBg: 'bg-blue-50/40',
-    accentBorder: 'border-blue-200',
+    primary: "from-blue-500 to-indigo-600",
+    bg: "bg-blue-50",
+    border: "border-blue-500",
+    text: "text-blue-600",
+    toggle: "bg-blue-500",
+    overlay: "from-blue-900/90 to-indigo-900/70",
+    formBg: "bg-blue-50/40",
+    accentBorder: "border-blue-200",
   };
 
-  const currentColor = selectedRole === 'student' ? studentColor : riderColor;
+  const currentColor = selectedRole === "student" ? studentColor : riderColor;
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Left Column */}
-      <motion.div 
+      <motion.div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
         initial={false}
       >
-        <Image src="/img/left-onboard.svg" alt="Boride Registration" fill className="object-cover" priority />
+        <Image
+          src="/img/left-onboard.svg"
+          alt="Boride Registration"
+          fill
+          className="object-cover"
+          priority
+        />
 
         {/* Enhanced Content Overlay with gradient */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${currentColor.overlay} flex items-center justify-center transition-all duration-500`}>
+        <div
+          className={`absolute inset-0 bg-gradient-to-br ${currentColor.overlay} flex items-center justify-center transition-all duration-500`}
+        >
           <div className="text-white text-center px-8 max-w-md">
             <AnimatePresence mode="wait">
-              {selectedRole === 'student' ? (
+              {selectedRole === "student" ? (
                 <motion.div
                   key="student-content"
                   initial={{ opacity: 0, y: 20 }}
@@ -97,11 +113,11 @@ export default function RegisterPage() {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={{ 
-                      delay: 0.2, 
-                      type: 'spring', 
-                      stiffness: 200, 
-                      damping: 15 
+                    transition={{
+                      delay: 0.2,
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 15,
                     }}
                     className="mb-8"
                   >
@@ -109,10 +125,12 @@ export default function RegisterPage() {
                       <GraduationCap className="w-16 h-16" />
                     </div>
                   </motion.div>
-                  <h1 className="text-5xl font-bold mb-6 font-jakarta">Join as a Student</h1>
+                  <h1 className="text-5xl font-bold mb-6 font-jakarta">
+                    Join as a Student
+                  </h1>
                   <p className="text-xl text-white/90 max-w-md leading-relaxed">
-                    Connect with verified riders for safe and convenient campus transportation. 
-                    Your journey starts here.
+                    Connect with verified riders for safe and convenient campus
+                    transportation. Your journey starts here.
                   </p>
                 </motion.div>
               ) : (
@@ -127,11 +145,11 @@ export default function RegisterPage() {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={{ 
-                      delay: 0.2, 
-                      type: 'spring', 
-                      stiffness: 200, 
-                      damping: 15 
+                    transition={{
+                      delay: 0.2,
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 15,
                     }}
                     className="mb-8"
                   >
@@ -139,10 +157,12 @@ export default function RegisterPage() {
                       <Car className="w-16 h-16" />
                     </div>
                   </motion.div>
-                  <h1 className="text-5xl font-bold mb-6 font-jakarta">Join as a Rider</h1>
+                  <h1 className="text-5xl font-bold mb-6 font-jakarta">
+                    Join as a Rider
+                  </h1>
                   <p className="text-xl text-white/90 max-w-md leading-relaxed">
-                    Start earning by providing safe rides to students. 
-                    Be part of our trusted community.
+                    Start earning by providing safe rides to students. Be part
+                    of our trusted community.
                   </p>
                 </motion.div>
               )}
@@ -152,21 +172,25 @@ export default function RegisterPage() {
       </motion.div>
 
       {/* Right Column - Registration Form */}
-      <div className={`w-full lg:w-1/2 flex items-center justify-center p-4 md:p-8 transition-colors duration-500 ${currentColor.formBg}`}>
+      <div
+        className={`w-full lg:w-1/2 flex items-center justify-center p-4 md:p-8 transition-colors duration-500 ${currentColor.formBg}`}
+      >
         <div className="w-full max-w-lg">
           {/* Logo/Brand */}
-          <motion.div 
+          <motion.div
             className="text-center mb-8"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Create Account
+            </h2>
             <p className="text-gray-600">Join the BoRide community today</p>
           </motion.div>
 
           {/* Role Toggle Switch */}
-          <motion.div 
+          <motion.div
             className="mb-8"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -178,31 +202,31 @@ export default function RegisterPage() {
                 className={`absolute top-1 bottom-1 rounded-full ${currentColor.toggle} transition-colors duration-300 shadow-md`}
                 initial={false}
                 animate={{
-                  left: selectedRole === 'student' ? '4px' : '50%',
-                  right: selectedRole === 'student' ? '50%' : '4px',
+                  left: selectedRole === "student" ? "4px" : "50%",
+                  right: selectedRole === "student" ? "50%" : "4px",
                 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
               />
-              
+
               {/* Toggle Buttons */}
               <button
-                onClick={() => setSelectedRole('student')}
+                onClick={() => setSelectedRole("student")}
                 className={`relative z-10 flex-1 py-3 px-6 rounded-full font-medium transition-colors duration-300 flex items-center justify-center gap-2 ${
-                  selectedRole === 'student' 
-                    ? 'text-white' 
-                    : 'text-gray-700 hover:text-gray-900'
+                  selectedRole === "student"
+                    ? "text-white"
+                    : "text-gray-700 hover:text-gray-900"
                 }`}
               >
                 <GraduationCap className="w-5 h-5" />
                 <span>Student</span>
               </button>
-              
+
               <button
-                onClick={() => setSelectedRole('rider')}
+                onClick={() => setSelectedRole("rider")}
                 className={`relative z-10 flex-1 py-3 px-6 rounded-full font-medium transition-colors duration-300 flex items-center justify-center gap-2 ${
-                  selectedRole === 'rider' 
-                    ? 'text-white' 
-                    : 'text-gray-700 hover:text-gray-900'
+                  selectedRole === "rider"
+                    ? "text-white"
+                    : "text-gray-700 hover:text-gray-900"
                 }`}
               >
                 <Car className="w-5 h-5" />
@@ -227,7 +251,7 @@ export default function RegisterPage() {
             />
 
             <AnimatePresence mode="wait">
-              {selectedRole === 'student' ? (
+              {selectedRole === "student" ? (
                 <motion.div
                   key="student-form"
                   initial={{ opacity: 0, x: -20 }}
@@ -238,14 +262,19 @@ export default function RegisterPage() {
                   <div className="mb-6">
                     <div className="flex items-center gap-3 justify-center">
                       <div className={`p-2 rounded-lg ${studentColor.bg}`}>
-                        <GraduationCap className={`w-5 h-5 ${studentColor.text}`} />
+                        <GraduationCap
+                          className={`w-5 h-5 ${studentColor.text}`}
+                        />
                       </div>
                       <p className={`text-lg font-bold ${studentColor.text}`}>
                         Student Registration
                       </p>
                     </div>
                   </div>
-                  <StudentRegisterForm onSubmit={handleStudentSubmit} isSubmitting={isSubmitting} />
+                  <StudentRegisterForm
+                    onSubmit={handleStudentSubmit}
+                    isSubmitting={isSubmitting}
+                  />
                 </motion.div>
               ) : (
                 <motion.div
@@ -265,23 +294,26 @@ export default function RegisterPage() {
                       </p>
                     </div>
                   </div>
-                  <RiderRegisterForm onSubmit={handleRiderSubmit} isSubmitting={isSubmitting} />
+                  <RiderRegisterForm
+                    onSubmit={handleRiderSubmit}
+                    isSubmitting={isSubmitting}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
           </motion.div>
 
           {/* Already Have Account Link */}
-          <motion.div 
+          <motion.div
             className="mt-6 text-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.5 }}
           >
             <p className="text-gray-600">
-              Already have an account?{' '}
-              <Link 
-                href="/auth/login" 
+              Already have an account?{" "}
+              <Link
+                href="/auth/login"
                 className={`font-semibold ${currentColor.text} hover:underline transition-colors duration-300`}
               >
                 Sign In
