@@ -17,10 +17,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { toast } from "sonner";
 import { PaymentMethodModal } from "@/components/shared/PaymentMethodModal";
-import { BackendRide } from "@/lib/types";
 
 // React Query hooks
 import { useWalletBalance, useStudentRides, useBookRide } from "@/lib/hooks";
+import Link from "next/link";
 
 const SAVED_LOCATIONS = [
   { id: "1", name: "Hostel", address: "Student Hostel Block A" },
@@ -210,47 +210,46 @@ export default function StudentDashboard() {
           ) : rides.length > 0 ? (
             <div className="space-y-3">
               {rides.map((ride: any) => (
-                <Card
-                  key={ride._id}
-                  className="hover:shadow-md transition-shadow"
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <MapPin className="w-4 h-4 text-gray-400" />
-                          <p className="font-medium text-sm">
-                            {ride.pickupLocation.address}
-                          </p>
+                <Link href={`/student/rides/${ride._id}`} key={ride._id}>
+                  <Card className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <MapPin className="w-4 h-4 text-gray-400" />
+                            <p className="font-medium text-sm">
+                              {ride.pickupLocation.address}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Navigation className="w-4 h-4 text-emerald-600" />
+                            <p className="font-medium text-sm">
+                              {ride.dropoffLocation.address}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 mt-2 items-center">
+                            <p className="text-xs text-gray-500">
+                              {new Date(ride.createdAt).toLocaleDateString()} •
+                              ₦{ride.fare}
+                            </p>
+                            <span
+                              className={`text-[10px] px-2 py-0.5 rounded-full ${
+                                ride.status === "completed"
+                                  ? "bg-green-100 text-green-700"
+                                  : ride.status === "cancelled"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-yellow-100 text-yellow-700"
+                              }`}
+                            >
+                              {ride.status}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Navigation className="w-4 h-4 text-emerald-600" />
-                          <p className="font-medium text-sm">
-                            {ride.dropoffLocation.address}
-                          </p>
-                        </div>
-                        <div className="flex gap-2 mt-2 items-center">
-                          <p className="text-xs text-gray-500">
-                            {new Date(ride.createdAt).toLocaleDateString()} • ₦
-                            {ride.fare}
-                          </p>
-                          <span
-                            className={`text-[10px] px-2 py-0.5 rounded-full ${
-                              ride.status === "completed"
-                                ? "bg-green-100 text-green-700"
-                                : ride.status === "cancelled"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-yellow-100 text-yellow-700"
-                            }`}
-                          >
-                            {ride.status}
-                          </span>
-                        </div>
+                        <ChevronRight className="w-5 h-5 text-gray-400" />
                       </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           ) : (

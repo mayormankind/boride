@@ -119,8 +119,8 @@ export default function StudentRideDetailsPage({ params }: PageProps) {
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Route Summary */}
         <Card className="shadow-lg border-0">
-          <CardContent className="p-6">
-            <div className="space-y-4">
+          <CardContent className="p-4">
+            <div className="space-y-2">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-full bg-student-primary/10 flex items-center justify-center flex-shrink-0">
                   <MapPin className="w-5 h-5 text-student-primary" />
@@ -168,7 +168,7 @@ export default function StudentRideDetailsPage({ params }: PageProps) {
                 Driver Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-2">
               <div className="flex items-center gap-4">
                 <Avatar className="w-14 h-14">
                   <AvatarFallback className="bg-rider-primary text-white text-xl">
@@ -184,7 +184,7 @@ export default function StudentRideDetailsPage({ params }: PageProps) {
               </div>
 
               {/* Vehicle Info */}
-              {ride.driver.vehicleInfo && (
+              {ride.driver?.vehicleInfo && (
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Car className="w-4 h-4 text-gray-600" />
@@ -229,7 +229,7 @@ export default function StudentRideDetailsPage({ params }: PageProps) {
         {/* Ride Timeline */}
         <Card className="shadow-lg border-0">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="text-lg flex items-center gap-1">
               <Clock className="w-5 h-5 text-student-primary" />
               Ride Timeline
             </CardTitle>
