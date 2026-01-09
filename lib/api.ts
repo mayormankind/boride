@@ -119,7 +119,17 @@ export const authApi = {
   driverResendOtp: (data: { email: string }) =>
     api.post("/driver/resend-otp", data),
   driverUpdateProfile: (data: any) => api.put("/driver/profile", data),
+  driverUpdateProfile: (data: any) => api.put("/driver/profile", data),
   driverToggleAvailability: () => api.put("/driver/availability", {}),
+
+  // Shared Password Reset
+  forgotPassword: (email: string, userType: "student" | "driver") =>
+    api.post(`/${userType}/forgot-password`, { email }),
+  resetPassword: (
+    token: string,
+    password: string,
+    userType: "student" | "driver"
+  ) => api.put(`/${userType}/reset-password/${token}`, { password }),
 
   //shared
   getMe: () => api.get("/auth/me"),
