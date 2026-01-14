@@ -1,3 +1,4 @@
+// app/api/chat/route.ts
 import { NextResponse } from "next/server";
 import { borideKnowledge } from "@/lib/knowledge";
 import OpenAI from "openai";

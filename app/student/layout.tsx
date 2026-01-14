@@ -4,6 +4,7 @@
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import StudentBottomNav from "@/components/shared/StudentBottomNav";
 import { RideCompletionConfirmation } from "@/components/ride/RideCompletionConfirmation";
+import FloatingChatButton from "@/components/shared/FloatingChatButton";
 
 export default function StudentLayout({
   children,
@@ -16,6 +17,8 @@ export default function StudentLayout({
       <StudentBottomNav />
       {/* Persistent ride completion confirmation - appears when driver requests completion */}
       <RideCompletionConfirmation />
+      {/* Floating chat button - appears on all student pages except chat page */}
+      <FloatingChatButton />
     </ProtectedRoute>
   );
 }
