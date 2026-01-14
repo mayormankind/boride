@@ -13,8 +13,8 @@ export default function BorideChatUI() {
     {
       id: 1,
       role: "assistant",
-      content: "Hi 👋 How can I help you with Boride today?"
-    }
+      content: "Hi 👋 How can I help you with Boride today?",
+    },
   ]);
 
   const [input, setInput] = useState("");
@@ -26,7 +26,7 @@ export default function BorideChatUI() {
     const userMessage: Message = {
       id: Date.now(),
       role: "user",
-      content: input
+      content: input,
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -37,7 +37,7 @@ export default function BorideChatUI() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.content })
+        body: JSON.stringify({ message: userMessage.content }),
       });
 
       const data = await res.json();
@@ -45,7 +45,7 @@ export default function BorideChatUI() {
       const aiMessage: Message = {
         id: Date.now() + 1,
         role: "assistant",
-        content: data.reply || "Sorry, I couldn't process that."
+        content: data.reply || "Sorry, I couldn't process that.",
       };
 
       setMessages((prev) => [...prev, aiMessage]);
@@ -55,8 +55,8 @@ export default function BorideChatUI() {
         {
           id: Date.now() + 2,
           role: "assistant",
-          content: "Something went wrong. Please try again."
-        }
+          content: "Something went wrong. Please try again.",
+        },
       ]);
     } finally {
       setLoading(false);
@@ -64,14 +64,14 @@ export default function BorideChatUI() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] max-w-md mx-auto bg-white border rounded-lg overflow-hidden">
+    <div className="flex flex-col h-[100dvh] md:h-[100dvh] max-w-md mx-auto bg-white border rounded-lg overflow-hidden pb-16 md:pb-0">
       {/* Header */}
       <div className="px-4 py-3 border-b font-semibold bg-gray-50">
         Boride Support
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-4">
         {messages.map((msg) => (
           <div
             key={msg.id}
