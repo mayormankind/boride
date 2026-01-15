@@ -23,6 +23,28 @@ export class ApiError extends Error {
   }
 }
 
+let storedToken: string | null = null;
+
+// Store token from login response
+export const setAuthToken = (token: string) => {
+  storedToken = token;
+  localStorage.setItem("auth_token", token); // Persist across sessions
+};
+
+export const getAuthToken = () => {
+  if (!storedToken && typeof window !== "undefined") {
+    storedToken = localStorage.getItem("auth_token");
+  }
+  return storedToken;
+};
+
+export const clearAuthToken = () => {
+  storedToken = null;
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("auth_token");
+  }
+};
+
 // Create axios instance
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -104,7 +126,13 @@ export const api = {
 export const authApi = {
   // Student
   studentRegister: (data: any) => api.post("/student/register", data),
-  studentLogin: (data: any) => api.post("/student/login", data),
+  studentLogin: async (data: any) => {
+    const res = await api.post<any>("/student/login", data);
+    if ((res as any).token) {
+      setAuthToken((res as any).token);
+    }
+    return res;
+  },
   studentVerifyEmail: (data: { email: string; otp: string }) =>
     api.post("/student/verify-email", data),
   studentResendOtp: (data: { email: string }) =>
@@ -113,7 +141,13 @@ export const authApi = {
 
   // Driver
   driverRegister: (data: any) => api.post("/driver/register", data),
-  driverLogin: (data: any) => api.post("/driver/login", data),
+  driverLogin: async (data: any) => {
+    const res = await api.post<any>("/driver/login", data);
+    if ((res as any).token) {
+      setAuthToken((res as any).token);
+    }
+    return res;
+  },
   driverVerifyEmail: (data: { email: string; otp: string }) =>
     api.post("/driver/verify-email", data),
   driverResendOtp: (data: { email: string }) =>
@@ -205,3 +239,29 @@ export const studentApi = {
 export const driverApi = {
   getStats: () => api.get<DriverStats>("/driver/stats"),
 };
+
+// Add token to every request
+axiosInstance.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Global 401 interceptor
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      clearAuthToken();
+      if (
+        typeof window !== "undefined" &&
+        !window.location.pathname.includes("/login")
+      ) {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);

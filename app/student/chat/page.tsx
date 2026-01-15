@@ -64,7 +64,7 @@ export default function BorideChatUI() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] md:h-[100dvh] max-w-md mx-auto bg-white border rounded-lg overflow-hidden pb-16 md:pb-0">
+    <div className="flex flex-col h-dvh max-w-md mx-auto bg-white border rounded-lg overflow-hidden pb-16 md:pb-0">
       {/* Header */}
       <div className="px-4 py-3 border-b font-semibold bg-gray-50">
         Boride Support

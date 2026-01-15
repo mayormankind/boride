@@ -89,7 +89,7 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-student-bg via-white to-gray-50 pb-20">
+    <div className="min-h-screen bg-linear-to-br from-student-bg via-white to-gray-50 pb-20">
       <PaymentMethodModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
@@ -99,7 +99,7 @@ export default function StudentDashboard() {
       />
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-student-primary to-student-dark p-6 text-white rounded-b-3xl shadow-lg">
+      <div className="bg-linear-to-r from-student-primary to-student-dark p-6 text-white rounded-b-3xl shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold font-jakarta">
@@ -151,7 +151,7 @@ export default function StudentDashboard() {
             <Button
               onClick={handleRequestRide}
               disabled={!pickup || !destination || bookRideMutation.isPending}
-              className="w-full h-12 bg-gradient-to-r from-student-primary to-student-dark hover:from-student-dark hover:to-student-hover text-white font-semibold text-base shadow-md disabled:from-gray-300 disabled:to-gray-400 transition-all duration-300"
+              className="w-full h-12 bg-linear-to-r from-student-primary to-student-dark hover:from-student-dark hover:to-student-hover text-white font-semibold text-base shadow-md disabled:from-gray-300 disabled:to-gray-400 transition-all duration-300"
             >
               {bookRideMutation.isPending ? (
                 <Loader2Icon className="animate-spin mr-2" />
@@ -171,12 +171,12 @@ export default function StudentDashboard() {
             {SAVED_LOCATIONS.map((location) => (
               <Card
                 key={location.id}
-                className="flex-shrink-0 w-44 cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-student-primary"
+                className="shrink-0 w-44 cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-student-primary"
                 onClick={() => setPickup(location.address)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-student-primary mt-1 flex-shrink-0" />
+                    <MapPin className="w-4 h-4 text-student-primary mt-1 shrink-0" />
                     <div>
                       <p className="font-semibold text-sm">{location.name}</p>
                       <p className="text-xs text-gray-500 mt-1">

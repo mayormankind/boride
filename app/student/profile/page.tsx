@@ -44,9 +44,9 @@ export default function StudentProfilePage() {
   console.log(user)
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-student-bg via-white to-gray-50 pb-20">
+    <div className="min-h-screen bg-linear-to-br from-student-bg via-white to-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-student-primary to-student-dark py-8 px-6 text-white">
+      <div className="bg-linear-to-r from-student-primary to-student-dark py-8 px-6 text-white">
         <h1 className="text-2xl font-bold font-jakarta">My Profile</h1>
         <p className="text-emerald-100 text-sm mt-1">Manage your account information</p>
       </div>
@@ -58,11 +58,11 @@ export default function StudentProfilePage() {
             <div className="relative inline-block mb-4">
               <Avatar className="w-28 h-28 border-4 border-white shadow-lg">
                 <AvatarImage src={user?.profileImage} alt={user?.fullName} />
-                <AvatarFallback className="bg-gradient-to-br from-student-primary to-student-dark text-white text-3xl font-bold">
+                <AvatarFallback className="bg-linear-to-br from-student-primary to-student-dark text-white text-3xl font-bold">
                   {user?.fullName?.charAt(0) || 'S'}
                 </AvatarFallback>
               </Avatar>
-              <button className="absolute bottom-0 right-0 w-10 h-10 bg-student-primary text-white rounded-full flex items-center justify-center shadow-md hover:bg-student-dark transition-colors">
+              <button title="profile" className="absolute bottom-0 right-0 w-10 h-10 bg-student-primary text-white rounded-full flex items-center justify-center shadow-md hover:bg-student-dark transition-colors">
                 <Camera className="w-5 h-5" />
               </button>
             </div>
