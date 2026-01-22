@@ -48,7 +48,9 @@ export const clearAuthToken = () => {
 // Create axios instance
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 // Helper to handle axios responses
