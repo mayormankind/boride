@@ -29,7 +29,7 @@ const SAVED_LOCATIONS = [
   { id: "4", name: "Sports Complex", address: "Campus Sports Arena" },
 ];
 
-const ESTIMATED_FARE = 500;
+const ESTIMATED_FARE = 200;
 
 export default function StudentDashboard() {
   const user = useAuthStore((state) => state.user);
