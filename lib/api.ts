@@ -16,7 +16,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
-    public errors?: Record<string, string[]>
+    public errors?: Record<string, string[]>,
   ) {
     super(message);
     this.name = "ApiError";
@@ -67,7 +67,7 @@ function handleError(error: unknown) {
       throw new ApiError(
         data.message || "An error occurred",
         status,
-        data.errors
+        data.errors,
       );
     }
 
@@ -161,7 +161,7 @@ export const authApi = {
   resetPassword: (
     token: string,
     password: string,
-    userType: "student" | "driver"
+    userType: "student" | "driver",
   ) => api.put(`/${userType}/reset-password/${token}`, { password }),
 
   //shared
@@ -174,21 +174,21 @@ export const rideApi = {
   bookRide: (data: any) => api.post("/student/rides", data),
   getStudentRides: (status?: string) =>
     api.get<StudentRidesResponse>(
-      `/student/rides${status ? `?status=${status}` : ""}`
+      `/student/rides${status ? `?status=${status}` : ""}`,
     ),
   getRideDetails: (rideId: string, userType: "student" | "driver") =>
     api.get<any>(`/${userType}/rides/${rideId}`),
   cancelRide: (
     rideId: string,
     reason: string,
-    userType: "student" | "driver"
+    userType: "student" | "driver",
   ) => api.put(`/${userType}/rides/${rideId}/cancel`, { reason }),
   rateRide: (rideId: string, data: { rating: number; review?: string }) =>
     api.put(`/student/rides/${rideId}/rate`, data),
   // Confirmation system
   confirmCompletion: (
     rideId: string,
-    data: { action: "confirm" | "reject"; reason?: string }
+    data: { action: "confirm" | "reject"; reason?: string },
   ) => api.put(`/student/rides/${rideId}/confirm`, data),
   getPendingConfirmation: () =>
     api.get<any>("/student/rides/pending-confirmation"),
@@ -202,11 +202,11 @@ export const rideApi = {
   startRide: (rideId: string) => api.put(`/driver/rides/${rideId}/start`, {}),
   completeRide: (
     rideId: string,
-    data: { actualDistance: number; actualDuration: number }
+    data: { actualDistance: number; actualDuration: number },
   ) => api.put(`/driver/rides/${rideId}/complete`, data),
   requestCompletion: (
     rideId: string,
-    data: { actualDistance: number; actualDuration: number }
+    data: { actualDistance: number; actualDuration: number },
   ) => api.put(`/driver/rides/${rideId}/request-completion`, data),
 };
 
@@ -218,10 +218,10 @@ export const walletApi = {
   getTransactionHistory: (
     userType: "student" | "driver",
     limit = 20,
-    page = 1
+    page = 1,
   ) =>
     api.get<WalletTransactionsData>(
-      `/${userType}/wallet/transactions?limit=${limit}&page=${page}`
+      `/${userType}/wallet/transactions?limit=${limit}&page=${page}`,
     ),
 
   fundWallet: (data: { amount: number; paymentReference: string }) =>
@@ -257,11 +257,11 @@ axiosInstance.interceptors.response.use(
       clearAuthToken();
       if (
         typeof window !== "undefined" &&
-        !window.location.pathname.includes("/login")
+        !window.location.pathname.includes("/auth/login")
       ) {
-        window.location.href = "/login";
+        window.location.href = "/auth/login";
       }
     }
     return Promise.reject(error);
-  }
+  },
 );

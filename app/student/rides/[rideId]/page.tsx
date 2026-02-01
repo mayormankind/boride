@@ -18,10 +18,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { RideCountdown } from "@/components/ride/RideCountdown";
 import { RideTimeline } from "@/components/ride/RideTimeline";
 import { useRideDetails } from "@/lib/hooks/useRideDetails";
+import { useCancelRide } from "@/lib/hooks/useCancelRide";
 import StudentBottomNav from "@/components/shared/StudentBottomNav";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   pending: { label: "Searching for Driver", color: "bg-yellow-500" },
@@ -37,6 +40,8 @@ interface PageProps {
 
 export default function StudentRideDetailsPage({ params }: PageProps) {
   const { rideId } = use(params);
+  const router = useRouter();
+  const cancelRideMutation = useCancelRide();
 
   const {
     data: ride,
@@ -48,6 +53,20 @@ export default function StudentRideDetailsPage({ params }: PageProps) {
     rideId,
     userType: "student",
   });
+
+  const handleCancelRide = async () => {
+    if (confirm("Are you sure you want to cancel this ride?")) {
+      try {
+        await cancelRideMutation.mutateAsync({
+          rideId,
+          reason: "Cancelled by student",
+        });
+        refetch();
+      } catch {
+        // Error handled by hook
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -93,9 +112,9 @@ export default function StudentRideDetailsPage({ params }: PageProps) {
   const statusConfig = STATUS_CONFIG[ride.status] || STATUS_CONFIG.pending;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-student-bg via-white to-gray-50 pb-20">
+    <div className="min-h-screen bg-linear-to-br from-student-bg via-white to-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-student-primary to-student-dark p-6 text-white">
+      <div className="bg-linear-to-r from-student-primary to-student-dark p-6 text-white">
         <Link
           href="/student/rides"
           className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-4"
@@ -110,9 +129,17 @@ export default function StudentRideDetailsPage({ params }: PageProps) {
               Ride #{ride.id.slice(-8).toUpperCase()}
             </p>
           </div>
-          <Badge className={`${statusConfig.color} text-white px-3 py-1`}>
-            {statusConfig.label}
-          </Badge>
+          <div className="flex flex-col items-end gap-2">
+            <Badge className={`${statusConfig.color} text-white px-3 py-1`}>
+              {statusConfig.label}
+            </Badge>
+            {ride.status === "pending" && (
+              <RideCountdown
+                createdAt={ride.createdAt}
+                onExpire={() => refetch()}
+              />
+            )}
+          </div>
         </div>
       </div>
 
@@ -122,7 +149,7 @@ export default function StudentRideDetailsPage({ params }: PageProps) {
           <CardContent className="p-4">
             <div className="space-y-2">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-student-primary/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-student-primary/10 flex items-center justify-center shrink-0">
                   <MapPin className="w-5 h-5 text-student-primary" />
                 </div>
                 <div className="flex-1">
@@ -134,7 +161,7 @@ export default function StudentRideDetailsPage({ params }: PageProps) {
               <div className="border-l-2 border-dashed border-gray-200 ml-5 h-4" />
 
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-600/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-emerald-600/10 flex items-center justify-center shrink-0">
                   <Navigation className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div className="flex-1">
@@ -222,6 +249,44 @@ export default function StudentRideDetailsPage({ params }: PageProps) {
                   </Button>
                 </div>
               )}
+
+              {/* Cancel Button - only for pending and accepted rides */}
+              {["pending", "accepted"].includes(ride.status) && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <Button
+                    variant="destructive"
+                    className="w-full bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+                    onClick={handleCancelRide}
+                    disabled={cancelRideMutation.isPending}
+                  >
+                    {cancelRideMutation.isPending
+                      ? "Cancelling..."
+                      : "Cancel Ride"}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Cancel Button for Pending Rides (No Driver Yet) */}
+        {ride.status === "pending" && !ride.driver && (
+          <Card className="shadow-lg border-0 border-red-100 bg-red-50/50">
+            <CardContent className="p-4">
+              <p className="text-sm text-gray-600 mb-3 text-center">
+                Current searching for a driver. You can cancel if you change
+                your mind.
+              </p>
+              <Button
+                variant="destructive"
+                className="w-full bg-white text-red-600 hover:bg-red-50 border border-red-200"
+                onClick={handleCancelRide}
+                disabled={cancelRideMutation.isPending}
+              >
+                {cancelRideMutation.isPending
+                  ? "Cancelling..."
+                  : "Cancel Request"}
+              </Button>
             </CardContent>
           </Card>
         )}

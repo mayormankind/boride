@@ -44,10 +44,20 @@ export default function StudentDashboard() {
   const { data: ridesData, isLoading: isFetchingRides } = useStudentRides();
   const bookRideMutation = useBookRide();
 
-  const rides = ridesData?.rides?.slice(0, 3) || [];
+  const rides = ridesData?.rides || [];
+
+  // Check if student has any active ride
+  const activeRide = rides.find((ride: any) =>
+    ["pending", "accepted", "ongoing"].includes(ride.status),
+  );
 
   // Step 1: Fetch wallet balance and open payment modal
   const handleRequestRide = async () => {
+    if (activeRide) {
+      toast.error("You already have an active ride in progress.");
+      return;
+    }
+
     if (!pickup || !destination) return;
 
     if (isLoadingBalance) {
@@ -237,8 +247,8 @@ export default function StudentDashboard() {
                                 ride.status === "completed"
                                   ? "bg-green-100 text-green-700"
                                   : ride.status === "cancelled"
-                                  ? "bg-red-100 text-red-700"
-                                  : "bg-yellow-100 text-yellow-700"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-yellow-100 text-yellow-700"
                               }`}
                             >
                               {ride.status}
