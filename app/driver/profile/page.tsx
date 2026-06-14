@@ -46,7 +46,7 @@ export default function DriverProfilePage() {
         ...vehicleForm,
         year: vehicleForm.year ? parseInt(vehicleForm.year) : null,
       });
-      updateUser({ vehicleInfo: { ...vehicleForm, year: vehicleForm.year ? parseInt(vehicleForm.year) : null } });
+      updateUser({ vehicleInfo: { ...vehicleForm, year: vehicleForm.year ? parseInt(vehicleForm.year) : undefined } });
       toast.success('Vehicle info updated successfully');
       setShowVehicleModal(false);
     } catch (e: any) {
