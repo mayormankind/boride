@@ -33,13 +33,13 @@ export default function DriverWalletPage() {
   const fetchWalletData = async () => {
     try {
       const balanceRes = await walletApi.getWalletBalance('driver');
-      if (balanceRes.success && balanceRes.data) {
-        setBalance(balanceRes.data.balance);
+      if (balanceRes.success) {
+        setBalance(balanceRes.balance);
       }
 
       const historyRes = await walletApi.getTransactionHistory('driver');
-      if (historyRes.success && historyRes.data) {
-        setTransactions(historyRes.data.transactions);
+      if (historyRes.success) {
+        setTransactions(historyRes.transactions || []);
       }
     } catch (error) {
       console.error('Error fetching wallet data', error);

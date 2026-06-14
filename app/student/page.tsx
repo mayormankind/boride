@@ -8,6 +8,8 @@ import {
   ChevronRight,
   Car,
   Loader2Icon,
+  AlertCircle,
+  TrendingUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -129,6 +131,27 @@ export default function StudentDashboard() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 -mt-8">
+        {/* Active Ride Banner */}
+        {activeRide && (
+          <Link href={`/student/rides/${activeRide._id}`}>
+            <div className="mb-4 bg-amber-50 border-2 border-amber-400 rounded-2xl p-4 flex items-center justify-between shadow-md animate-pulse-once">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-400 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Car className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-amber-900 text-sm">You have an active ride</p>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    Status: <span className="font-medium capitalize">{activeRide.status.replace('_', ' ')}</span>
+                    {activeRide.driver && ` · ${activeRide.driver.fullName || 'Driver assigned'}`}
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-amber-600" />
+            </div>
+          </Link>
+        )}
+
         {/* Request Ride Card */}
         <Card className="shadow-xl border-0 bg-white">
           <CardHeader>

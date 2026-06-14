@@ -1,13 +1,42 @@
 //app/driver/earnings/page.tsx
 'use client';
 
-import { DollarSign, TrendingUp, Car, XCircle, Calendar, BarChart3 } from 'lucide-react';
+import { DollarSign, TrendingUp, Car, XCircle, Calendar, BarChart3, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useDriverStore } from '@/lib/stores/driverStore';
+import { useQuery } from '@tanstack/react-query';
+import { driverApi } from '@/lib/api';
 
 export default function DriverEarningsPage() {
-  const stats = useDriverStore((state) => state.stats);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['driver', 'earnings'],
+    queryFn: async () => {
+      const res = await driverApi.getEarnings();
+      if (!res.success) throw new Error(res.message || 'Failed to fetch earnings');
+      return res.earnings;
+    },
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+
+  const stats = data || {
+    dailyEarnings: 0,
+    weeklyEarnings: 0,
+    monthlyEarnings: 0,
+    totalEarnings: 0,
+    completedTrips: 0,
+    cancelledTrips: 0,
+    totalTrips: 0,
+    rating: 0,
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-rider-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rider-bg via-white to-gray-50 pb-20">

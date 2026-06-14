@@ -15,7 +15,8 @@ export function useStudentRides(status?: string) {
         count: response.count || 0,
       };
     },
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 10 * 1000, // 10 seconds
+    refetchInterval: 15 * 1000, // Poll every 15 seconds for live status updates
     refetchOnWindowFocus: true,
   });
 }

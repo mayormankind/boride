@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Car, Bell, User } from "lucide-react";
+import { Home, Car, Bell, User, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -14,6 +14,7 @@ interface NavItem {
 const studentNavItems: NavItem[] = [
   { name: "Home", href: "/student", icon: Home },
   { name: "My Rides", href: "/student/rides", icon: Car },
+  { name: "Wallet", href: "/student/wallet", icon: Wallet },
   { name: "Notifications", href: "/student/notifications", icon: Bell },
   { name: "Profile", href: "/student/profile", icon: User },
 ];

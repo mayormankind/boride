@@ -156,6 +156,13 @@ export const authApi = {
     api.post("/driver/resend-otp", data),
   driverUpdateProfile: (data: any) => api.put("/driver/profile", data),
   driverToggleAvailability: () => api.put("/driver/availability", {}),
+  driverUpdateVehicle: (data: any) => api.put("/driver/profile", { vehicleInfo: data }),
+
+  // Change password (authenticated)
+  studentChangePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.put("/student/change-password", data),
+  driverChangePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.put("/driver/change-password", data),
 
   // Shared Password Reset
   forgotPassword: (email: string, userType: "student" | "driver") =>
@@ -240,6 +247,7 @@ export const studentApi = {
 
 export const driverApi = {
   getStats: () => api.get<DriverStats>("/driver/stats"),
+  getEarnings: () => api.get<any>("/driver/earnings"),
 };
 
 // Add token to every request

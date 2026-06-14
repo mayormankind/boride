@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { User, Mail, Phone, Car, FileText, Camera, Lock, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { User, Mail, Phone, Car, FileText, Camera, Lock, LogOut, Settings as SettingsIcon, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { authApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
@@ -23,6 +24,37 @@ export default function DriverProfilePage() {
     fullName: user?.fullName || '',
     phoneNo: user?.phoneNo || '',
   });
+
+  const [showVehicleModal, setShowVehicleModal] = useState(false);
+  const [isSavingVehicle, setIsSavingVehicle] = useState(false);
+  const [vehicleForm, setVehicleForm] = useState({
+    make: user?.vehicleInfo?.make || '',
+    model: user?.vehicleInfo?.model || '',
+    plateNumber: user?.vehicleInfo?.plateNumber || '',
+    color: user?.vehicleInfo?.color || '',
+    year: user?.vehicleInfo?.year?.toString() || '',
+  });
+
+  const handleSaveVehicle = async () => {
+    if (!vehicleForm.make || !vehicleForm.model || !vehicleForm.plateNumber) {
+      toast.error('Make, model and plate number are required');
+      return;
+    }
+    setIsSavingVehicle(true);
+    try {
+      await authApi.driverUpdateVehicle({
+        ...vehicleForm,
+        year: vehicleForm.year ? parseInt(vehicleForm.year) : null,
+      });
+      updateUser({ vehicleInfo: { ...vehicleForm, year: vehicleForm.year ? parseInt(vehicleForm.year) : null } });
+      toast.success('Vehicle info updated successfully');
+      setShowVehicleModal(false);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to update vehicle info');
+    } finally {
+      setIsSavingVehicle(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -184,8 +216,9 @@ export default function DriverProfilePage() {
             <Button
               variant="outline"
               className="w-full border-rider-primary text-rider-primary hover:bg-rider-primary hover:text-white"
+              onClick={() => setShowVehicleModal(true)}
             >
-              {user?.vehicleInfo ? 'Update Vehicle Info' : 'Add Vehicle Info'}
+              {user?.vehicleInfo?.make ? 'Update Vehicle Info' : 'Add Vehicle Info'}
             </Button>
           </CardContent>
         </Card>
@@ -241,13 +274,15 @@ export default function DriverProfilePage() {
               </Button>
             </Link>
             
-            <Button
-              variant="outline"
-              className="w-full justify-start h-12 hover:bg-orange-50"
-            >
-              <Lock className="w-5 h-5 mr-3 text-orange-500" />
-              <span>Change Password</span>
-            </Button>
+            <Link href="/driver/change-password">
+              <Button
+                variant="outline"
+                className="w-full justify-start h-12 hover:bg-orange-50"
+              >
+                <Lock className="w-5 h-5 mr-3 text-orange-500" />
+                <span>Change Password</span>
+              </Button>
+            </Link>
 
             <Button
               variant="outline"
@@ -260,6 +295,70 @@ export default function DriverProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Vehicle Edit Modal */}
+      <Dialog open={showVehicleModal} onOpenChange={setShowVehicleModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{user?.vehicleInfo?.make ? 'Update Vehicle Info' : 'Add Vehicle Info'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-700">Make *</label>
+                <Input
+                  placeholder="e.g. Toyota"
+                  value={vehicleForm.make}
+                  onChange={(e) => setVehicleForm({ ...vehicleForm, make: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-700">Model *</label>
+                <Input
+                  placeholder="e.g. Corolla"
+                  value={vehicleForm.model}
+                  onChange={(e) => setVehicleForm({ ...vehicleForm, model: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-700">Plate Number *</label>
+              <Input
+                placeholder="e.g. ABC-123-XY"
+                value={vehicleForm.plateNumber}
+                onChange={(e) => setVehicleForm({ ...vehicleForm, plateNumber: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-700">Color</label>
+                <Input
+                  placeholder="e.g. White"
+                  value={vehicleForm.color}
+                  onChange={(e) => setVehicleForm({ ...vehicleForm, color: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-700">Year</label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 2020"
+                  value={vehicleForm.year}
+                  onChange={(e) => setVehicleForm({ ...vehicleForm, year: e.target.value })}
+                />
+              </div>
+            </div>
+            <Button
+              onClick={handleSaveVehicle}
+              disabled={isSavingVehicle}
+              className="w-full bg-rider-primary hover:bg-rider-dark"
+            >
+              {isSavingVehicle ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {isSavingVehicle ? 'Saving...' : 'Save Vehicle Info'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
